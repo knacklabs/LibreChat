@@ -39,6 +39,7 @@ const { openAIApiKey, userProvidedOpenAI } = require('./Config/EndpointService')
  * @param {boolean} [params.userIdQuery=false] - Whether to send the user ID as a query parameter.
  * @param {boolean} [params.createTokenConfig=true] - Whether to create a token configuration from the API response.
  * @param {string} [params.tokenKey] - The cache key to save the token configuration. Uses `name` if omitted.
+ * @param {Record<string, string>} [params.headers] - Custom headers to use for the request instead of constructing Authorization header from apiKey.
  * @returns {Promise<string[]>} A promise that resolves to an array of model identifiers.
  * @async
  */
@@ -52,6 +53,7 @@ const fetchModels = async ({
   userIdQuery = false,
   createTokenConfig = true,
   tokenKey,
+  headers,
 }) => {
   let models = [];
   const baseURL = direct ? extractBaseURL(_baseURL) : _baseURL;
@@ -74,7 +76,10 @@ const fetchModels = async ({
       timeout: 5000,
     };
 
-    if (name === EModelEndpoint.anthropic) {
+    if (headers) {
+      // Use provided headers for endpoints that specify custom headers (like LiteLLM)
+      options.headers = { ...headers };
+    } else if (name === EModelEndpoint.anthropic) {
       options.headers = {
         'x-api-key': apiKey,
         'anthropic-version': process.env.ANTHROPIC_VERSION || '2023-06-01',

@@ -44,6 +44,14 @@ const initializeClient = async ({ req, res, endpointOption, optionsOnly, overrid
     user: req.user,
   });
 
+  // For LiteLLM, use the authorization header from the request
+  if (endpoint.toLowerCase().includes('litellm') || endpoint.toLowerCase().includes('lite')) {
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      resolvedHeaders.Authorization = authHeader;
+    }
+  }
+
   if (CUSTOM_API_KEY.match(envVarRegex)) {
     throw new Error(`Missing API Key for ${endpoint}.`);
   }

@@ -1,4 +1,4 @@
-const { isUserProvided, normalizeEndpointName } = require('@librechat/api');
+const { isUserProvided, normalizeEndpointName, resolveHeaders } = require('@librechat/api');
 const { EModelEndpoint, extractEnvVariable } = require('librechat-data-provider');
 const { fetchModels } = require('~/server/services/ModelService');
 const { getAppConfig } = require('./app');
@@ -9,8 +9,10 @@ const { getAppConfig } = require('./app');
  * @param {ServerRequest} req - The Express request object.
  */
 async function loadConfigModels(req) {
+
   const appConfig = await getAppConfig({ role: req.user?.role });
   if (!appConfig) {
+    console.log('No app config found');
     return {};
   }
   const modelsConfig = {};
@@ -68,17 +70,37 @@ async function loadConfigModels(req) {
 
     modelsConfig[name] = [];
 
-    if (models.fetch && !isUserProvided(API_KEY) && !isUserProvided(BASE_URL)) {
-      fetchPromisesMap[uniqueKey] =
-        fetchPromisesMap[uniqueKey] ||
-        fetchModels({
-          name,
-          apiKey: API_KEY,
-          baseURL: BASE_URL,
-          user: req.user.id,
-          direct: endpoint.directEndpoint,
-          userIdQuery: models.userIdQuery,
-        });
+    if (models.fetch && !isUserProvided(BASE_URL)) {
+      // Resolve headers for endpoints that have custom headers (like LiteLLM)
+      const resolvedHeaders = resolveHeaders({
+        headers: endpoint.headers,
+        user: req.user,
+      });
+
+      // For LiteLLM, use the authorization header from the request
+      if (name.toLowerCase().includes('litellm') || name.toLowerCase().includes('lite')) {
+        const authHeader = req.headers.authorization;
+        if (authHeader) {
+          resolvedHeaders.Authorization = authHeader;
+        }
+      }
+
+      // Use headers if available, otherwise fall back to apiKey
+      const shouldFetch = Object.keys(resolvedHeaders).length > 0 || (!isUserProvided(API_KEY) && API_KEY);
+
+      if (shouldFetch) {
+        fetchPromisesMap[uniqueKey] =
+          fetchPromisesMap[uniqueKey] ||
+          fetchModels({
+            name,
+            apiKey: API_KEY,
+            baseURL: BASE_URL,
+            user: req.user.id,
+            direct: endpoint.directEndpoint,
+            userIdQuery: models.userIdQuery,
+            headers: Object.keys(resolvedHeaders).length > 0 ? resolvedHeaders : undefined,
+          });
+      }
       uniqueKeyToEndpointsMap[uniqueKey] = uniqueKeyToEndpointsMap[uniqueKey] || [];
       uniqueKeyToEndpointsMap[uniqueKey].push(name);
       continue;
