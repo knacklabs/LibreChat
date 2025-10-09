@@ -3,7 +3,7 @@ name: Build and Deploy LibreChat API
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "main" , "test-workflow"]
 
 permissions:
   contents: read
