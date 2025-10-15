@@ -139,4 +139,4 @@ helm/**/.values.yaml
 /.codeium
 *.local.md
 
-litellm/
+./litellm/
