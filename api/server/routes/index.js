@@ -27,9 +27,11 @@ const edit = require('./edit');
 const keys = require('./keys');
 const user = require('./user');
 const mcp = require('./mcp');
+const guardrails = require('./guardrails');
 
 module.exports = {
   mcp,
+  guardrails,
   edit,
   auth,
   keys,

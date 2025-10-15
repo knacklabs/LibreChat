@@ -1222,6 +1222,16 @@ ${convo}
         });
       }
 
+      // Handle guardrails parameter
+      const guardrails = this.options.req?.body?.guardrails;
+      if (guardrails && Array.isArray(guardrails) && guardrails.length > 0) {
+        modelOptions.guardrails = guardrails;
+        logger.debug('[OpenAIClient] chatCompletion: added guardrails', {
+          guardrails: guardrails,
+          modelOptions,
+        });
+      }
+
       /** Note: OpenAI Web Search models do not support any known parameters besdies `max_tokens` */
       if (modelOptions.model && /gpt-4o.*search/.test(modelOptions.model)) {
         const searchExcludeParams = [

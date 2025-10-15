@@ -5,6 +5,7 @@ services:
     #   dockerfile: Dockerfile.multi
     #   target: api-build
     image: ghcr.io/danny-avila/librechat-dev-api:latest
+    #image: ghcr.io/knacklabs/librechat:test-workflow-f92aaaf
     container_name: LibreChat-API
     ports:
       - 3080:3080
