@@ -27,6 +27,7 @@ const initializeClient = async ({
     AZURE_OPENAI_BASEURL,
     OPENAI_SUMMARIZE,
     DEBUG_OPENAI,
+    LITELLM_URL
   } = process.env;
   const { key: expiresAt } = req.body;
   const modelName = overrideModel ?? req.body.model;
@@ -37,6 +38,8 @@ const initializeClient = async ({
     [EModelEndpoint.openAI]: OPENAI_API_KEY,
     [EModelEndpoint.azureOpenAI]: AZURE_API_KEY,
   };
+  // Check if either OpenAI or Azure API key is "openid" to use LibreChat authorization header
+  const shouldUseOpenIdAuth = credentials[endpoint] === 'openid';
 
   const baseURLOptions = {
     [EModelEndpoint.openAI]: OPENAI_REVERSE_PROXY,
@@ -55,11 +58,21 @@ const initializeClient = async ({
   let apiKey = userProvidesKey ? userValues?.apiKey : credentials[endpoint];
   let baseURL = userProvidesURL ? userValues?.baseURL : baseURLOptions[endpoint];
 
+  // Use LITELLM_URL as fallback if no endpoint-specific base URL is available
+  if (!baseURL && LITELLM_URL) {
+    baseURL = LITELLM_URL;
+  }
+  // Use authorization header as API key when OpenID auth is enabled
+  if (shouldUseOpenIdAuth) {
+    apiKey = req.headers.authorization;
+  }
+
   let clientOptions = {
     contextStrategy,
     proxy: PROXY ?? null,
     debug: isEnabled(DEBUG_OPENAI),
     reverseProxyUrl: baseURL ? baseURL : null,
+    authHeader: shouldUseOpenIdAuth ? req.headers.authorization : null,
     ...endpointOption,
   };
 
@@ -100,7 +113,10 @@ const initializeClient = async ({
     clientOptions.dropParams = azureConfig.groupMap[groupName].dropParams;
     clientOptions.forcePrompt = azureConfig.groupMap[groupName].forcePrompt;
 
-    apiKey = azureOptions.azureOpenAIApiKey;
+    // Don't override apiKey if using OpenID auth
+    if (!shouldUseOpenIdAuth) {
+      apiKey = azureOptions.azureOpenAIApiKey;
+    }
     clientOptions.azure = !serverless && azureOptions;
     if (serverless === true) {
       clientOptions.defaultQuery = azureOptions.azureOpenAIApiVersion
@@ -109,8 +125,13 @@ const initializeClient = async ({
       clientOptions.headers['api-key'] = apiKey;
     }
   } else if (isAzureOpenAI) {
-    clientOptions.azure = userProvidesKey ? JSON.parse(userValues.apiKey) : getAzureCredentials();
-    apiKey = clientOptions.azure.azureOpenAIApiKey;
+    // Don't override apiKey if using OpenID auth
+    if (!shouldUseOpenIdAuth) {
+      clientOptions.azure = userProvidesKey ? JSON.parse(userValues.apiKey) : getAzureCredentials();
+      apiKey = clientOptions.azure.azureOpenAIApiKey;
+    } else {
+      clientOptions.azure = getAzureCredentials();
+    }
   }
 
   /** @type {undefined | TBaseEndpoint} */
@@ -126,7 +147,7 @@ const initializeClient = async ({
     clientOptions.streamRate = allConfig.streamRate;
   }
 
-  if (userProvidesKey & !apiKey) {
+  if (userProvidesKey && !shouldUseOpenIdAuth && !apiKey) {
     throw new Error(
       JSON.stringify({
         type: ErrorTypes.NO_USER_KEY,
@@ -134,8 +155,12 @@ const initializeClient = async ({
     );
   }
 
-  if (!apiKey) {
+  if (!shouldUseOpenIdAuth && !apiKey) {
     throw new Error(`${endpoint} API Key not provided.`);
+  }
+
+  if (shouldUseOpenIdAuth && !req.headers.authorization) {
+    throw new Error(`${endpoint} Authorization header not provided for OpenID authentication.`);
   }
 
   if (optionsOnly) {
