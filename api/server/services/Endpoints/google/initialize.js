@@ -36,12 +36,12 @@ const initializeClient = async ({ req, res, endpointOption, overrideModel, optio
       serviceKey = {};
     }
   }
-
+  const shouldUseOpenIdAuth = GOOGLE_KEY === 'openid';
   const credentials = isUserProvided
     ? userKey
     : {
         [AuthKeys.GOOGLE_SERVICE_KEY]: serviceKey,
-        [AuthKeys.GOOGLE_API_KEY]: GOOGLE_KEY,
+        [AuthKeys.GOOGLE_API_KEY]: req.headers.authorization,
       };
 
   let clientOptions = {};
@@ -62,15 +62,13 @@ const initializeClient = async ({ req, res, endpointOption, overrideModel, optio
   }
 
   // Check if GOOGLE_KEY is "openid" to use LibreChat authorization header
-  const shouldUseOpenIdAuth = GOOGLE_KEY === 'openid';
+  
 
   clientOptions = {
     req,
     res,
     reverseProxyUrl: GOOGLE_REVERSE_PROXY ?? null,
-    authHeader: shouldUseOpenIdAuth
-      ? req.headers.authorization
-      : (isEnabled(GOOGLE_AUTH_HEADER) ?? null),
+    authHeader: (isEnabled(GOOGLE_AUTH_HEADER) ?? null),
     proxy: PROXY ?? null,
     ...clientOptions,
     ...endpointOption,
