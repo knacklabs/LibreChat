@@ -2,7 +2,6 @@ import { useGetModelsQuery } from 'librechat-data-provider/react-query';
 import type { TConversation } from 'librechat-data-provider';
 import type { TSetOption } from '~/common';
 import { multiChatOptions } from './options';
-import GuardrailsSelect from '~/components/Input/GuardrailsSelect';
 
 type TGoogleProps = {
   showExamples: boolean;
@@ -25,10 +24,7 @@ export default function ModelSelect({
 }: TSelectProps) {
   const modelsQuery = useGetModelsQuery();
 
-  console.log("ModelSelect conversation:", conversation);
-
   if (!conversation?.endpoint) {
-    console.log("No conversation or endpoint, GuardrailsSelect will not render");
     return null;
   }
 
@@ -43,15 +39,12 @@ export default function ModelSelect({
   }
 
   return (
-    <>
-      <OptionComponent
-        conversation={conversation}
-        setOption={setOption}
-        models={models}
-        showAbove={showAbove}
-        popover={popover}
-      />
-      <GuardrailsSelect conversation={conversation} setOption={setOption} showAbove={showAbove} />
-    </>
+    <OptionComponent
+      conversation={conversation}
+      setOption={setOption}
+      models={models}
+      showAbove={showAbove}
+      popover={popover}
+    />
   );
 }
