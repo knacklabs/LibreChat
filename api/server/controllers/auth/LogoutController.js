@@ -17,7 +17,7 @@ const logoutController = async (req, res) => {
       query: req.query || {},
     });
   } catch (e) {
-    // avoid throwing on logging issues
+    console.error('[logoutController] Logging failed during invocation:', e.message);
   }
   const refreshToken = req.headers.cookie ? cookies.parse(req.headers.cookie).refreshToken : null;
   try {
@@ -67,7 +67,9 @@ const logoutController = async (req, res) => {
     }
     try {
       logger.info('[logoutController] responding', { status, response });
-    } catch (e) {}
+    } catch (e) {
+        console.error('[logoutController] Logging failed during response:', e.message);
+    }
     return res.status(status).send(response);
   } catch (err) {
     logger.error('[logoutController]', err);
