@@ -38,6 +38,7 @@ const AuthContextProvider = ({
   const [error, setError] = useState<string | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const logoutRedirectRef = useRef<string | undefined>(undefined);
+  const logoutInProgressRef = useRef<boolean>(false);
 
   const { data: userRole = null } = useGetRole(SystemRoles.USER, {
     enabled: !!(isAuthenticated && (user?.role ?? '')),
@@ -120,6 +121,8 @@ const AuthContextProvider = ({
       if (redirect) {
         logoutRedirectRef.current = redirect;
       }
+      // mark logout in progress to avoid triggering a silent refresh
+      logoutInProgressRef.current = true;
       logoutUser.mutate(undefined);
     },
     [logoutUser],
@@ -134,6 +137,11 @@ const AuthContextProvider = ({
   const silentRefresh = useCallback(() => {
     if (authConfig?.test === true) {
       console.log('Test mode. Skipping silent refresh.');
+      return;
+    }
+    // If a logout is in progress, skip attempting a silent refresh
+    if (logoutInProgressRef.current) {
+      console.log('Logout in progress. Skipping silent refresh.');
       return;
     }
     refreshToken.mutate(undefined, {

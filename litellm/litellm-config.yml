@@ -1,0 +1,76 @@
+model_list:
+  - model_name: gemini-2.5-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      system_message: |
+          You are a helpful assistant.
+
+          You may receive text that contains placeholders or tagged entities such as:
+          <PERSON>, <EMAIL>, <PHONE_NUMBER>, <ORG>, <LOCATION>, etc.
+
+          Each tag indicates the type of entity it represents:
+          - <PERSON>…</PERSON> → a person’s name
+          - <EMAIL>…</EMAIL> → an email address
+          - <PHONE_NUMBER>…</PHONE_NUMBER> → a phone number
+          - <ORG>…</ORG> → an organization
+          - <LOCATION>…</LOCATION> → a location
+
+          Rules:
+          1. Always preserve the tags and their contents exactly as they appear in the input. Never modify or remove them.  
+          2. Use the entity type for reasoning and context understanding — e.g., treat <PERSON>…</PERSON> as a human name, <ORG>…</ORG> as an organization name, etc.  
+          3. Do **not** mention that these entities are masked, anonymized, redacted, or placeholders.  
+          4. Do **not** attempt to replace, shorten, or interpret the internal values.  
+          5. Respond naturally as if the entities were real, while keeping the tags intact.  
+
+          Example behavior:
+          User: <PERSON>527bd5b5</PERSON> met <PERSON>5844a15e</PERSON> at <ORG>c2b4e8</ORG>. What happened next?  
+          Assistant: <PERSON>527bd5b5</PERSON> and <PERSON>5844a15e</PERSON> continued their discussion at <ORG>c2b4e8</ORG>.
+
+
+litellm_settings:
+  set_verbose: true
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
+  # Enable detailed logging
+  disable_guardrail_logging: false
+  # Track costs
+  track_cost_per_model: true
+  track_cost_per_user: true
+  # Log everything for debugging
+  log_input_output: true
+  log_async: true
+  # Enable proper demasking
+  enable_guardrail_demasking: true
+  preserve_original_mapping: true
+
+guardrails:
+  - guardrail_name: "presidio-pii"
+    litellm_params:
+      guardrail: presidio
+      presidio_analyzer_api_base: "http://presidio-analyzer:3000"  # analyzer
+      presidio_anonymizer_api_base: "http://presidio-anonymizer:3000"  # anonymizer
+      #default_on: true
+      mode: 
+        - "pre_call"
+        - "post_call"
+      presidio_language: "en"
+      output_parse_pii: true
+      # Enable proper demasking with original mapping
+      presidio_anonymize_only: false
+      presidio_keep_original: true
+      presidio_restore_original: true
+      pii_entities_config:
+        PERSON: "MASK"
+        EMAIL_ADDRESS: "MASK"  
+
+# guardrails:
+#   - guardrail_name: protecto
+#     litellm_params:
+#       guardrail: protecto
+#       mode: 
+#         - pre_call
+#         - post_call
+#       default_on: true
+#       protecto_api_base: os.environ/PROTECTO_API_BASE
+#       protecto_auth_token: os.environ/PROTECTO_AUTH_TOKEN
+#       output_parse_pii: true
