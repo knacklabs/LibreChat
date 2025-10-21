@@ -11,7 +11,7 @@ import {
 import { debounce } from 'lodash';
 import { useRecoilState } from 'recoil';
 import { useNavigate } from 'react-router-dom';
-import { setTokenHeader, SystemRoles } from 'librechat-data-provider';
+import { QueryKeys, setTokenHeader, SystemRoles } from 'librechat-data-provider';
 import type * as t from 'librechat-data-provider';
 import {
   useGetRole,
@@ -23,6 +23,7 @@ import {
 import { TAuthConfig, TUserContext, TAuthContext, TResError } from '~/common';
 import useTimeout from './useTimeout';
 import store from '~/store';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext<TAuthContext | undefined>(undefined);
 
@@ -39,6 +40,7 @@ const AuthContextProvider = ({
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const logoutRedirectRef = useRef<string | undefined>(undefined);
   const logoutInProgressRef = useRef<boolean>(false);
+  const queryClient = useQueryClient();
 
   const { data: userRole = null } = useGetRole(SystemRoles.USER, {
     enabled: !!(isAuthenticated && (user?.role ?? '')),
@@ -96,6 +98,10 @@ const AuthContextProvider = ({
     },
   });
   const logoutUser = useLogoutUserMutation({
+    onMutate: () => {
+      logoutInProgressRef.current = true;
+      queryClient.cancelQueries();
+    },
     onSuccess: (data) => {
       setUserContext({
         token: undefined,
@@ -121,8 +127,7 @@ const AuthContextProvider = ({
       if (redirect) {
         logoutRedirectRef.current = redirect;
       }
-      // mark logout in progress to avoid triggering a silent refresh
-      logoutInProgressRef.current = true;
+      // The onMutate callback will handle setting the flag and canceling queries
       logoutUser.mutate(undefined);
     },
     [logoutUser],
@@ -131,6 +136,8 @@ const AuthContextProvider = ({
   const userQuery = useGetUserQuery({ enabled: !!(token ?? '') });
 
   const login = (data: t.TLoginUser) => {
+    // Reset logout flag when logging in
+    logoutInProgressRef.current = false;
     loginUser.mutate(data);
   };
 
@@ -177,7 +184,7 @@ const AuthContextProvider = ({
     if (error != null && error && isAuthenticated) {
       doSetError(undefined);
     }
-    if (token == null || !token || !isAuthenticated) {
+    if (!logoutInProgressRef.current && (token == null || !token || !isAuthenticated)) {
       silentRefresh();
     }
   }, [
