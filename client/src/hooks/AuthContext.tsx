@@ -232,6 +232,7 @@ const AuthContextProvider = ({
         [SystemRoles.ADMIN]: adminRole,
       },
       isAuthenticated,
+      logoutInProgress: logoutInProgressRef.current,
     }),
 
     [user, error, isAuthenticated, token, userRole, adminRole],
