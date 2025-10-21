@@ -5,6 +5,20 @@ const { logoutUser } = require('~/server/services/AuthService');
 const { getOpenIdConfig } = require('~/strategies');
 
 const logoutController = async (req, res) => {
+  // Entry log to confirm controller is invoked
+  try {
+    logger.info('[logoutController] invoked', {
+      method: req.method,
+      path: req.originalUrl || req.url,
+      hasCookiesHeader: Boolean(req.headers.cookie),
+      hasAuthHeader: Boolean(req.headers.authorization),
+      userId: req.user?.id || req.user?._id || null,
+      openidId: req.user?.openidId || null,
+      query: req.query || {},
+    });
+  } catch (e) {
+    console.error('[logoutController] Logging failed during invocation:', e.message);
+  }
   const refreshToken = req.headers.cookie ? cookies.parse(req.headers.cookie).refreshToken : null;
   try {
     const logout = await logoutUser(req, refreshToken);
@@ -12,6 +26,12 @@ const logoutController = async (req, res) => {
     res.clearCookie('refreshToken');
     res.clearCookie('token_provider');
     const response = { message };
+    // Log any incoming redirect hints on request
+    if (req.query && (req.query.redirect || req.query.redirect_uri)) {
+      logger.info('[logoutController] query redirect detected', {
+        redirect: req.query.redirect || req.query.redirect_uri,
+      });
+    }
     if (
       req.user.openidId != null &&
       isEnabled(process.env.OPENID_USE_END_SESSION_ENDPOINT) &&
@@ -27,13 +47,28 @@ const logoutController = async (req, res) => {
           ? openIdConfig.serverMetadata().end_session_endpoint
           : null;
         if (endSessionEndpoint) {
-          response.redirect = endSessionEndpoint;
+          const postLogoutRedirect = process.env.OPENID_POST_LOGOUT_REDIRECT_URI;
+          const clientId = process.env.OPENID_CLIENT_ID;
+          let logoutUrl = `${endSessionEndpoint}`;
+          if (clientId) {
+            logoutUrl += `${logoutUrl.includes('?') ? '&' : '?'}client_id=${encodeURIComponent(clientId)}`;
+          }
+          if (postLogoutRedirect) {
+            logoutUrl += `${logoutUrl.includes('?') ? '&' : '?'}post_logout_redirect_uri=${encodeURIComponent(postLogoutRedirect)}`;
+          }
+          response.redirect = logoutUrl;
+          // logger.info('[logoutController] end_session_endpoint', { endSessionEndpoint, logoutUrl });
         } else {
           logger.warn(
             '[logoutController] end_session_endpoint not found in OpenID issuer metadata. Please verify that the issuer is correct.',
           );
         }
       }
+    }
+    try {
+      logger.info('[logoutController] responding', { status, response });
+    } catch (e) {
+        console.error('[logoutController] Logging failed during response:', e.message);
     }
     return res.status(status).send(response);
   } catch (err) {

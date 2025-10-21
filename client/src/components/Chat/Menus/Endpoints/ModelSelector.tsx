@@ -2,16 +2,13 @@ import React, { useMemo } from 'react';
 import type { ModelSelectorProps } from '~/common';
 import { ModelSelectorProvider, useModelSelectorContext } from './ModelSelectorContext';
 import { ModelSelectorChatProvider } from './ModelSelectorChatContext';
-import {
-  renderModelSpecs,
-  renderEndpoints,
-  renderSearchResults,
-  renderCustomGroups,
-} from './components';
+import { renderModelSpecs, renderEndpoints, renderSearchResults } from './components';
 import { getSelectedIcon, getDisplayValue } from './utils';
 import { CustomMenu as Menu } from './CustomMenu';
 import DialogManager from './DialogManager';
 import { useLocalize } from '~/hooks';
+import GuardrailsSelect from '~/components/Input/GuardrailsSelect'; 
+
 
 function ModelSelectorContent() {
   const localize = useLocalize();
@@ -81,6 +78,7 @@ function ModelSelectorContent() {
             endpoint: values.endpoint || '',
             model: values.model || '',
             modelSpec: values.modelSpec || '',
+            guardrails: values.guardrails || [],
           });
         }}
         onSearch={(value) => setSearchValue(value)}
@@ -91,18 +89,34 @@ function ModelSelectorContent() {
           renderSearchResults(searchResults, localize, searchValue)
         ) : (
           <>
-            {/* Render ungrouped modelSpecs (no group field) */}
-            {renderModelSpecs(
-              modelSpecs?.filter((spec) => !spec.group) || [],
-              selectedValues.modelSpec || '',
-            )}
-            {/* Render endpoints (will include grouped specs matching endpoint names) */}
+            {renderModelSpecs(modelSpecs, selectedValues.modelSpec || '')}
             {renderEndpoints(mappedEndpoints ?? [])}
-            {/* Render custom groups (specs with group field not matching any endpoint) */}
-            {renderCustomGroups(modelSpecs || [], mappedEndpoints ?? [])}
+            {/* Guardrails section - only show when a model is selected */}
+            {selectedValues.model && (
+              <div className="border-t border-gray-200 dark:border-gray-600">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                  Guardrails
+                </div>
+                <GuardrailsSelect
+                  conversation={{
+                    guardrails: selectedValues.guardrails || []
+                  }}
+                  setOption={(key) => (value) => {
+                    console.log('setOption called with:', key, value);
+                    setSelectedValues({
+                      ...selectedValues,
+                      [key]: value
+                    });
+                  }}
+                  showAbove={false}
+                />
+              </div>
+            )}
           </>
         )}
       </Menu>
+
+
       <DialogManager
         keyDialogOpen={keyDialogOpen}
         onOpenChange={onOpenChange}
