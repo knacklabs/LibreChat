@@ -14,19 +14,22 @@ router.use(configMiddleware);
 router.get('/', async (req, res) => {
   try {
     // Resolve LiteLLM from custom endpoints by name (e.g., name: "litellm")
-    const litellmConfig = req.config?.endpoints?.custom?.find(
-      (ep) => (ep?.name || '').toLowerCase() === 'litellm'
-    );
+    // const litellmConfig = req.config?.endpoints?.custom?.find(
+    //   (ep) => (ep?.name || '').toLowerCase() === 'litellm'
+    // );
 
 
-    if (!litellmConfig) {
-      return res
-        .status(400)
-        .json({ error: 'LiteLLM endpoint not configured in LibreChat config' });
-    }
+    // if (!litellmConfig) {
+    //   return res
+    //     .status(400)
+    //     .json({ error: 'LiteLLM endpoint not configured in LibreChat config' });
+    // }
 
-    const baseURL = litellmConfig.baseURL;
-    const apiKey = litellmConfig.apiKey;
+    // const baseURL = litellmConfig.baseURL;
+    // const apiKey = litellmConfig.apiKey;
+    const baseURL = process.env.LITELLM_URL;
+    const apiKey = process.env.LITELLM_API_KEY || "default_api_key";
+
     
     if (!baseURL) {
       return res.status(400).json({ error: 'LiteLLM base URL not configured' });
