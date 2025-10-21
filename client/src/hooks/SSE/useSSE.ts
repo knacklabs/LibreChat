@@ -202,8 +202,9 @@ export default function useSSE(
       /* @ts-ignore */
       if (e.responseCode === 401) {
         /* Don't refresh token if logout is in progress */
+        console.log('🔍 SSE: 401 error received, logoutInProgress:', logoutInProgress);
         if (logoutInProgress) {
-          console.log('Logout in progress, skipping token refresh');
+          console.log('🚫 SSE: Logout in progress, skipping token refresh');
           return;
         }
         

@@ -38,6 +38,7 @@ const AuthContextProvider = ({
   const [token, setToken] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [logoutInProgress, setLogoutInProgress] = useState<boolean>(false);
   const logoutRedirectRef = useRef<string | undefined>(undefined);
   const logoutInProgressRef = useRef<boolean>(false);
   const queryClient = useQueryClient();
@@ -127,16 +128,28 @@ const AuthContextProvider = ({
       if (redirect) {
         logoutRedirectRef.current = redirect;
       }
-      // The onMutate callback will handle setting the flag and canceling queries
+      // Set logout flag IMMEDIATELY to prevent any refresh calls during OAuth logout
+      setLogoutInProgress(true);
+      logoutInProgressRef.current = true;
+      console.log('🚪 Logout button clicked, flag set immediately');
+      console.log('🚪 logoutInProgress state:', true);
+      console.log('🚪 logoutInProgressRef.current:', logoutInProgressRef.current);
+      
+      // Cancel all queries immediately to stop SSE and other API calls
+      queryClient.cancelQueries();
+      queryClient.clear();
+      
+      // The onMutate callback will handle additional cleanup
       logoutUser.mutate(undefined);
     },
-    [logoutUser],
+    [logoutUser, queryClient],
   );
 
   const userQuery = useGetUserQuery({ enabled: !!(token ?? '') });
 
   const login = (data: t.TLoginUser) => {
     // Reset logout flag when logging in
+    setLogoutInProgress(false);
     logoutInProgressRef.current = false;
     loginUser.mutate(data);
   };
@@ -184,12 +197,21 @@ const AuthContextProvider = ({
     if (error != null && error && isAuthenticated) {
       doSetError(undefined);
     }
-    if (!logoutInProgressRef.current && (token == null || !token || !isAuthenticated)) {
+    console.log('🔍 AuthContext useEffect:', {
+      logoutInProgress: logoutInProgressRef.current,
+      token: token ? 'exists' : 'null/undefined',
+      isAuthenticated,
+      condition: !logoutInProgressRef.current && (token == null || !token || !isAuthenticated)
+    });
+    
+    if (!logoutInProgress && (token == null || !token || !isAuthenticated)) {
+      console.log('🚨 AuthContext: Calling silentRefresh()');
       silentRefresh();
     }
   }, [
     token,
     isAuthenticated,
+    logoutInProgress,
     userQuery.data,
     userQuery.isError,
     userQuery.error,
@@ -232,10 +254,10 @@ const AuthContextProvider = ({
         [SystemRoles.ADMIN]: adminRole,
       },
       isAuthenticated,
-      logoutInProgress: logoutInProgressRef.current,
+      logoutInProgress,
     }),
 
-    [user, error, isAuthenticated, token, userRole, adminRole],
+    [user, error, isAuthenticated, token, userRole, adminRole, logoutInProgress],
   );
 
   return <AuthContext.Provider value={memoedValue}>{children}</AuthContext.Provider>;
