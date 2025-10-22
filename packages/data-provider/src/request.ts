@@ -84,9 +84,12 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 };
 
 if (typeof window !== 'undefined') {
+  // Version check - this will help us verify new code is loaded
+  
   axios.interceptors.response.use(
     (response) => response,
     async (error) => {
+      console.log('🔍 HTTP INTERCEPTOR TRIGGERED - Status:', error.response?.status);
       const originalRequest = error.config;
       if (!error.response) {
         return Promise.reject(error);
@@ -100,6 +103,16 @@ if (typeof window !== 'undefined') {
       }
 
       if (error.response.status === 401 && !originalRequest._retry) {
+        // Check if logout is in progress - don't refresh token during logout
+        const logoutInProgress = (window as any).logoutInProgress || false;
+        const isOnLoginPage = window.location.pathname === '/login';
+        
+        
+        if (logoutInProgress || isOnLoginPage) {
+          console.log('🚫 HTTP Client: Logout in progress or on login page, skipping token refresh');
+          return Promise.reject(error);
+        }
+        
         console.warn('401 error, refreshing token');
         originalRequest._retry = true;
 
