@@ -1,10 +1,12 @@
 const express = require('express');
 const { fetchGuardrails } = require('~/server/services/GuardrailsService');
 const { logger } = require('@librechat/data-schemas');
-const configMiddleware = require('~/server/middleware/config/app'); 
+const configMiddleware = require('~/server/middleware/config/app');
+const requireJwtAuth = require('~/server/middleware/requireJwtAuth');
 
 const router = express.Router();
 
+router.use(requireJwtAuth);
 router.use(configMiddleware);
 
 /**
@@ -28,7 +30,7 @@ router.get('/', async (req, res) => {
     // const baseURL = litellmConfig.baseURL;
     // const apiKey = litellmConfig.apiKey;
     const baseURL = process.env.LITELLM_URL;
-    const apiKey = process.env.LITELLM_API_KEY || "default_api_key";
+    // const apiKey = process.env.LITELLM_API_KEY || "default_api_key";
 
     
     if (!baseURL) {

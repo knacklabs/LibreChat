@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useGetEndpointsQuery } from '~/data-provider';
+import { request } from 'librechat-data-provider';
 
 interface Guardrail {
   guardrail_name: string;
@@ -10,14 +10,9 @@ interface GuardrailsResponse {
 }
 
 const fetchGuardrails = async (): Promise<Guardrail[]> => {
-  const response = await fetch('/api/guardrails');
-  if (!response.ok) {
-    throw new Error('Failed to fetch guardrails');
-  }
-  const data = await response.json();
+  const data = await request.get<GuardrailsResponse>('/api/guardrails');
   console.log("Guardrails data from hook:", data);
   return data.guardrails?.map((g: any) => g.guardrail_name) || [];
-
 };
 
 export const useGuardrails = () => {
