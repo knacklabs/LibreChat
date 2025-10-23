@@ -9,9 +9,9 @@ const initializeClient = async ({ req, res, endpointOption, overrideModel, optio
   const expiresAt = req.body.key;
   const isUserProvided = ANTHROPIC_API_KEY === 'user_provided';
 
-  const anthropicApiKey = isUserProvided
-    ? await getUserKey({ userId: req.user.id, name: EModelEndpoint.anthropic })
-    : ANTHROPIC_API_KEY;
+  let anthropicApiKey = isUserProvided
+  ? await getUserKey({ userId: req.user.id, name: EModelEndpoint.anthropic })
+  : ANTHROPIC_API_KEY;
 
   if (!anthropicApiKey) {
     throw new Error('Anthropic API key not provided. Please provide it again.');
@@ -20,11 +20,11 @@ const initializeClient = async ({ req, res, endpointOption, overrideModel, optio
   if (expiresAt && isUserProvided) {
     checkUserKeyExpiry(expiresAt, EModelEndpoint.anthropic);
   }
+
   const shouldUseOpenIdAuth = anthropicApiKey === 'openid';
 
-  // Use authorization header as API key when OpenID auth is enabled
   if (shouldUseOpenIdAuth) {
-    anthropicApiKey = req.headers.authorization;
+    anthropicApiKey = req.headers.authorization?.replace('Bearer ', '') || req.headers.authorization;
   }
   let clientOptions = {authHeader: shouldUseOpenIdAuth ? req.headers.authorization : null,};
 
