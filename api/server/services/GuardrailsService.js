@@ -1,5 +1,4 @@
-const { logger } = require('~/utils');
-
+const { logger } = require('@librechat/data-schemas');
 /**
  * Fetches available guardrails from LiteLLM endpoint
  * @param {string} baseURL - The LiteLLM base URL
