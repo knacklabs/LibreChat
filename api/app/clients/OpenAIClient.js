@@ -1224,12 +1224,21 @@ ${convo}
 
       // Handle guardrails parameter
       const guardrails = this.options.req?.body?.guardrails;
+      console.log('[OpenAIClient] Checking for guardrails in req.body:', this.options.req?.body?.guardrails);
+      console.log('[OpenAIClient] Full req.body:', JSON.stringify(this.options.req?.body, null, 2));
+      
       if (guardrails && Array.isArray(guardrails) && guardrails.length > 0) {
         modelOptions.guardrails = guardrails;
+        console.log('[OpenAIClient] chatCompletion: added guardrails', {
+          guardrails: guardrails,
+          modelOptions,
+        });
         logger.debug('[OpenAIClient] chatCompletion: added guardrails', {
           guardrails: guardrails,
           modelOptions,
         });
+      } else {
+        console.log('[OpenAIClient] No guardrails found or guardrails is empty');
       }
 
       /** Note: OpenAI Web Search models do not support any known parameters besdies `max_tokens` */

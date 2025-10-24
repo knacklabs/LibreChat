@@ -28,6 +28,11 @@ export default function createPayload(submission: t.TSubmission) {
       (isEdited ? '/modify' : '');
   }
 
+  // Debug logging
+  console.log('[createPayload] conversation:', conversation);
+  console.log('[createPayload] conversation.guardrails:', conversation?.guardrails);
+  console.log('[createPayload] endpointOption:', endpointOption);
+
   const payload: t.TPayload = {
     ...userMessage,
     ...endpointOption,
@@ -38,7 +43,11 @@ export default function createPayload(submission: t.TSubmission) {
     conversationId,
     isContinued: !!(isEdited && isContinued),
     ephemeralAgent: s.isAssistantsEndpoint(endpoint) ? undefined : ephemeralAgent,
+    // Include guardrails from conversation
+    guardrails: conversation?.guardrails,
   };
+
+  console.log('[createPayload] final payload:', payload);
 
   return { server, payload };
 }
