@@ -11,6 +11,9 @@ model_list:
     litellm_params:
       model: gpt-4o
 
+general_settings:
+  public_routes: ["LiteLLMRoutes.public_routes", "/guardrails/list"]
+  master_key: "sk-1234"
 
 
 litellm_settings:
@@ -28,6 +31,8 @@ litellm_settings:
   # Enable proper demasking
   enable_guardrail_demasking: true
   preserve_original_mapping: true
+  disable_guardrail_logging: false
+
 
 # guardrails:
 #   - guardrail_name: "presidio-pii"
@@ -56,7 +61,7 @@ guardrails:
       mode: 
         - pre_call
         - post_call
-      default_on: true
+      # default_on: true
       protecto_api_base: os.environ/PROTECTO_API_BASE
       protecto_auth_token: os.environ/PROTECTO_AUTH_TOKEN
       output_parse_pii: true

@@ -54,6 +54,11 @@ function createToolLoader(signal) {
 }
 
 const initializeClient = async ({ req, res, signal, endpointOption }) => {
+  console.log('[initializeClient] ===== INITIALIZE CLIENT CALLED =====');
+  console.log('[initializeClient] endpointOption:', JSON.stringify(endpointOption, null, 2));
+  console.log('[initializeClient] endpointOption.model_parameters:', JSON.stringify(endpointOption?.model_parameters, null, 2));
+  console.log('[initializeClient] endpointOption.model_parameters.extra_body:', JSON.stringify(endpointOption?.model_parameters?.extra_body, null, 2));
+  
   if (!endpointOption) {
     throw new Error('Endpoint option not provided');
   }

@@ -757,6 +757,8 @@ export const tConversationSchema = z.object({
   agentOptions: tAgentOptionsSchema.nullable().optional(),
   /** @deprecated Prefer `modelLabel` over `chatGptLabel` */
   chatGptLabel: z.string().nullable().optional(),
+  /* guardrails */
+  guardrails: z.array(z.string()).optional(),
 });
 
 export const tPresetSchema = tConversationSchema
@@ -782,6 +784,7 @@ export const tConvoUpdateSchema = tConversationSchema.merge(
     endpoint: extendedModelEndpointSchema.nullable(),
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
+    guardrails: z.array(z.string()).optional(),
   }),
 );
 

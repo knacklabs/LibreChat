@@ -98,6 +98,10 @@ export default function useChatFunctions({
 
     const conversation = cloneDeep(immutableConversation);
 
+    console.log('[useChatFunctions] immutableConversation:', immutableConversation);
+    console.log('[useChatFunctions] conversation after cloneDeep:', conversation);
+    console.log('[useChatFunctions] conversation.guardrails:', conversation?.guardrails);
+
     const endpoint = conversation?.endpoint;
     if (endpoint === null) {
       console.error('No endpoint available');

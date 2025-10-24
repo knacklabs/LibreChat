@@ -7,11 +7,15 @@ import { getSelectedIcon, getDisplayValue } from './utils';
 import { CustomMenu as Menu } from './CustomMenu';
 import DialogManager from './DialogManager';
 import { useLocalize } from '~/hooks';
-import GuardrailsSelect from '~/components/Input/GuardrailsSelect'; 
+import GuardrailsSelect from '~/components/Input/GuardrailsSelect';
+import useSetIndexOptions from '~/hooks/Conversations/useSetIndexOptions';
+import { useChatContext } from '~/Providers/ChatContext'; 
 
 
 function ModelSelectorContent() {
   const localize = useLocalize();
+  const { setOption } = useSetIndexOptions();
+  const { conversation } = useChatContext();
 
   const {
     // LibreChat
@@ -98,16 +102,8 @@ function ModelSelectorContent() {
                   Guardrails
                 </div>
                 <GuardrailsSelect
-                  conversation={{
-                    guardrails: selectedValues.guardrails || []
-                  }}
-                  setOption={(key) => (value) => {
-                    console.log('setOption called with:', key, value);
-                    setSelectedValues({
-                      ...selectedValues,
-                      [key]: value
-                    });
-                  }}
+                  conversation={conversation}
+                  setOption={setOption}
                   showAbove={false}
                 />
               </div>

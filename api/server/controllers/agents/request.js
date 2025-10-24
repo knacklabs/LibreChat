@@ -28,6 +28,11 @@ function createCloseHandler(abortController) {
 }
 
 const AgentController = async (req, res, next, initializeClient, addTitle) => {
+  console.log('[AgentController] ===== AGENT CONTROLLER CALLED =====');
+  console.log('[AgentController] Request URL:', req.url);
+  console.log('[AgentController] Request method:', req.method);
+  console.log('[AgentController] Request body keys:', Object.keys(req.body));
+  
   let {
     text,
     isRegenerate,
@@ -38,8 +43,29 @@ const AgentController = async (req, res, next, initializeClient, addTitle) => {
     parentMessageId = null,
     overrideParentMessageId = null,
     responseMessageId: editedResponseMessageId = null,
+    guardrails,
   } = req.body;
 
+  // Handle guardrails parameter
+  console.log('[AgentController] Checking for guardrails in req.body:', guardrails);
+  if (guardrails && Array.isArray(guardrails) && guardrails.length > 0) {
+    console.log('[AgentController] Guardrails found:', guardrails);
+    // Add guardrails to endpointOption for processing
+    if (endpointOption) {
+      endpointOption.guardrails = guardrails;
+      // Add guardrails directly to model_parameters for LiteLLM
+      if (endpointOption.model_parameters) {
+        endpointOption.model_parameters.guardrails = guardrails;
+        console.log('[AgentController] Added guardrails to model_parameters:', endpointOption.model_parameters.guardrails);
+      }
+      console.log('[AgentController] Added guardrails to endpointOption:', endpointOption);
+    }
+  } else {
+    console.log('[AgentController] No guardrails found or guardrails is empty');
+  }
+
+  console.log('[AgentController] endpointOption before processing:', JSON.stringify(endpointOption, null, 2));
+  
   let sender;
   let abortKey;
   let userMessage;
@@ -133,12 +159,14 @@ const AgentController = async (req, res, next, initializeClient, addTitle) => {
     };
     cleanupHandlers.push(removePrelimHandler);
     /** @type {{ client: TAgentClient; userMCPAuthMap?: Record<string, Record<string, string>> }} */
+    console.log('[AgentController] About to initialize client with endpointOption:', JSON.stringify(endpointOption, null, 2));
     const result = await initializeClient({
       req,
       res,
       endpointOption,
       signal: prelimAbortController.signal,
     });
+    console.log('[AgentController] Client initialized successfully:', result ? 'Client created' : 'No client');
     if (prelimAbortController.signal?.aborted) {
       prelimAbortController = null;
       throw new Error('Request was aborted before initialization could complete');
