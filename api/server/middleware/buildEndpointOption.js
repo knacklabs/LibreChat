@@ -85,6 +85,19 @@ async function buildEndpointOption(req, res, next) {
     // TODO: use object params
     req.body.endpointOption = await builder(endpoint, parsedBody, endpointType);
 
+    // Handle guardrails promptPrefix for agents endpoint
+    if (isAgents && req.body.guardrails && Array.isArray(req.body.guardrails) && req.body.guardrails.length > 0) {
+      if (req.body.endpointOption && req.body.endpointOption.model_parameters) {
+        req.body.endpointOption.model_parameters.guardrails = req.body.guardrails;
+        req.body.endpointOption.model_parameters.promptPrefix = process.env.GUARDRAILS_PROMPT_PREFIX;
+        logger.debug('[buildEndpointOption] Applied guardrails promptPrefix to agents endpoint');
+      }
+    } else if (isAgents && req.body.endpointOption && req.body.endpointOption.model_parameters) {
+      // Clear promptPrefix when no guardrails
+      req.body.endpointOption.model_parameters.promptPrefix = undefined;
+      logger.debug('[buildEndpointOption] Cleared promptPrefix for no guardrails');
+    }
+
     if (req.body.files && !isAgents) {
       req.body.endpointOption.attachments = processFiles(req.body.files);
     }
