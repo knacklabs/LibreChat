@@ -33,3 +33,5 @@ export { default as useSpeechToText } from './Input/useSpeechToText';
 export { default as useTextToSpeech } from './Input/useTextToSpeech';
 export { default as useGenerationsByLatest } from './useGenerationsByLatest';
 export { useResourcePermissions } from './useResourcePermissions';
+export { useUser } from './use-user';
+export { useUsage } from './use-usage';
