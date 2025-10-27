@@ -40,7 +40,30 @@ const AgentController = async (req, res, next, initializeClient, addTitle) => {
     parentMessageId = null,
     overrideParentMessageId = null,
     responseMessageId: editedResponseMessageId = null,
+    guardrails,
   } = req.body;
+
+  // Handle guardrails parameter
+  console.log('[AgentController] Checking for guardrails in req.body:', guardrails);
+  if (guardrails && Array.isArray(guardrails) && guardrails.length > 0) {
+    console.log('[AgentController] Guardrails found:', guardrails);
+    // Add guardrails to endpointOption for processing
+    if (endpointOption) {
+      // endpointOption.guardrails = guardrails;
+      // Add guardrails directly to model_parameters for LiteLLM
+      if (endpointOption.model_parameters) {
+        endpointOption.model_parameters.guardrails = guardrails;
+        // Only set promptPrefix when guardrails are present
+        endpointOption.model_parameters.promptPrefix = process.env.GUARDRAILS_PROMPT_PREFIX;
+        
+        console.log('[AgentController] Added guardrails to model_parameters:', endpointOption.model_parameters.guardrails);
+        console.log('[AgentController] Set promptPrefix to guardrails:', endpointOption.model_parameters.promptPrefix);
+      }
+      console.log('[AgentController] Added guardrails to endpointOption:', endpointOption);
+    }
+  } else {
+    console.log('[AgentController] No guardrails found or guardrails is empty');
+  }
 
   console.log('[AgentController] endpointOption before processing:', JSON.stringify(endpointOption, null, 2));
   
