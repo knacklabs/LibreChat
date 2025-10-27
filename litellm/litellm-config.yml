@@ -14,17 +14,18 @@ model_list:
 general_settings:
   public_routes: ["LiteLLMRoutes.public_routes", "/guardrails/list"]
   master_key: "sk-1234"
+  store_model_in_db: true
+  store_prompts_in_spend_logs: true
+
 
 
 litellm_settings:
   set_verbose: true
   success_callback: ["langfuse"]
   failure_callback: ["langfuse"]
-  # Enable detailed logging
-  disable_guardrail_logging: false
   # Track costs
-  track_cost_per_model: true
-  track_cost_per_user: true
+  track_cost_per_model: false
+  track_cost_per_user: false
   # Log everything for debugging
   log_input_output: true
   log_async: true

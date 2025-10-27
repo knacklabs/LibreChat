@@ -919,47 +919,14 @@ class AgentClient extends BaseClient {
         // Try to manually add guardrails to the LangChain model
         if (run.Graph.clientOptions.guardrails) {
           console.log('[AgentClient] Guardrails found in clientOptions:', run.Graph.clientOptions.guardrails);
-          
-          // Try adding guardrails to the LangChain model properties
-          console.log('[AgentClient] Adding guardrails to boundModel properties');
-          
+                    
           // Try adding to modelKwargs
           if (!run.Graph.boundModel.modelKwargs) {
             run.Graph.boundModel.modelKwargs = {};
           }
           run.Graph.boundModel.modelKwargs.guardrails = run.Graph.clientOptions.guardrails;
           console.log('[AgentClient] Added guardrails to modelKwargs:', run.Graph.boundModel.modelKwargs.guardrails);
-          
-          // Try adding to clientConfig
-          if (!run.Graph.boundModel.clientConfig) {
-            run.Graph.boundModel.clientConfig = {};
-          }
-          run.Graph.boundModel.clientConfig.guardrails = run.Graph.clientOptions.guardrails;
-          console.log('[AgentClient] Added guardrails to clientConfig:', run.Graph.boundModel.clientConfig.guardrails);
-          
-          // Try adding directly to the model
-          run.Graph.boundModel.guardrails = run.Graph.clientOptions.guardrails;
-          console.log('[AgentClient] Added guardrails directly to model:', run.Graph.boundModel.guardrails);
-          
-          // Log the current state of boundModel.kwargs
-          if (run.Graph.boundModel.kwargs) {
-            console.log('[AgentClient] Current boundModel.kwargs:', JSON.stringify(run.Graph.boundModel.kwargs, null, 2));
-            console.log('[AgentClient] boundModel.kwargs has guardrails:', !!run.Graph.boundModel.kwargs.guardrails);
-            console.log('[AgentClient] boundModel.kwargs guardrails value:', run.Graph.boundModel.kwargs.guardrails);
-          } else {
-            console.log('[AgentClient] boundModel.kwargs is undefined - checking alternative properties');
-            console.log('[AgentClient] boundModel keys:', Object.keys(run.Graph.boundModel));
-            console.log('[AgentClient] boundModel type:', typeof run.Graph.boundModel);
-            
-            // Check if there are alternative ways to access the kwargs
-            if (run.Graph.boundModel.lc_kwargs) {
-              console.log('[AgentClient] Found lc_kwargs:', JSON.stringify(run.Graph.boundModel.lc_kwargs, null, 2));
-            }
-            if (run.Graph.boundModel.modelKwargs) {
-              console.log('[AgentClient] Found modelKwargs:', JSON.stringify(run.Graph.boundModel.modelKwargs, null, 2));
-            }
-          }
-          
+                    
           console.log('[AgentClient] Final boundModel structure:', JSON.stringify(run.Graph.boundModel, null, 2));
           
         } else {

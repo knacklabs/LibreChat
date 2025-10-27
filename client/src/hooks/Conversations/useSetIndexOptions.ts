@@ -25,8 +25,6 @@ const useSetIndexOptions: TUseSetOptions = (preset = false) => {
   }
 
   const setOption: TSetOption = (param) => (newValue) => {
-    console.log('[useSetIndexOptions] setOption called with:', param, newValue);
-    console.log('[useSetIndexOptions] current conversation before update:', conversation);
     
     const update = {};
     update[param] = newValue;
@@ -54,8 +52,6 @@ const useSetIndexOptions: TUseSetOptions = (preset = false) => {
         }
       }
     }
-
-    // console.log('[useSetIndexOptions] update object:', update);
     
     setConversation(
       (prevState) =>
@@ -64,18 +60,7 @@ const useSetIndexOptions: TUseSetOptions = (preset = false) => {
           ...update,
         }) as TConversation,
     );
-    // setConversation(
-    //   (prevState) => {
-    //     const newState = {
-    //       ...prevState,
-    //       ...update,
-    //     };
-    //     console.log('[useSetIndexOptions] newState before parse:', newState);
-    //     const parsedState = tConvoUpdateSchema.parse(newState) as TConversation;
-    //     console.log('[useSetIndexOptions] parsedState after parse:', parsedState);
-    //     return parsedState;
-    //   }
-    // );
+
   };
 
   const setExample: TSetExample = (i, type, newValue = null) => {

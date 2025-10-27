@@ -69,7 +69,22 @@ const initializeAgent = async ({
     ),
   );
 
-  const { resendFiles, maxContextTokens, modelOptions } = extractLibreChatParams(_modelOptions);
+  const { resendFiles, maxContextTokens, modelOptions, promptPrefix } = extractLibreChatParams(_modelOptions);
+
+  console.log('[initializeAgent] modelOptions:', JSON.stringify(modelOptions, null, 2));
+  console.log('[AgentInit] promptPrefix after extractLibreChatParams:', promptPrefix);
+  console.log('[AgentInit] Current agent.instructions:', agent.instructions);
+  
+  // Convert promptPrefix to instructions (like Bedrock does)
+  // Always update promptPrefix when it exists to handle changing guardrails
+  if (promptPrefix) {
+    console.log('[AgentInit] Converting promptPrefix to instructions:', promptPrefix);
+    console.log('[AgentInit] Previous instructions:', agent.instructions);
+    agent.instructions = promptPrefix;
+  } else {
+    console.log('[AgentInit] No promptPrefix to convert, clearing instructions to prevent caching');
+    // agent.instructions = '';
+  }
 
   if (isInitialAgent && conversationId != null && resendFiles) {
     const fileIds = (await getConvoFiles(conversationId)) ?? [];
