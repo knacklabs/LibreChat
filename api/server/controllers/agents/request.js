@@ -28,7 +28,6 @@ function createCloseHandler(abortController) {
 }
 
 const AgentController = async (req, res, next, initializeClient, addTitle) => {
-  console.log('[AgentController] ===== AGENT CONTROLLER CALLED =====');
   
   let {
     text,
@@ -40,10 +39,8 @@ const AgentController = async (req, res, next, initializeClient, addTitle) => {
     parentMessageId = null,
     overrideParentMessageId = null,
     responseMessageId: editedResponseMessageId = null,
-    guardrails,
   } = req.body;
 
-  console.log('[AgentController] endpointOption before processing:', JSON.stringify(endpointOption, null, 2));
   
   let sender;
   let abortKey;
