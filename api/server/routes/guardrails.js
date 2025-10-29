@@ -1,6 +1,6 @@
 const express = require('express');
 const { fetchGuardrails } = require('~/server/services/GuardrailsService');
-const { logger } = require('~/utils');
+const { logger } = require('@librechat/data-schemas');
 const configMiddleware = require('~/server/middleware/config/app');
 const requireJwtAuth = require('~/server/middleware/requireJwtAuth');
 
