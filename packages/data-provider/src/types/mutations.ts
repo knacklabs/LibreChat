@@ -357,6 +357,12 @@ export type TDeleteSharedLinkResponse = {
   message: string;
 };
 
+export type TContinueShareResponse = {
+  conversationId: string;
+  title: string;
+  messageCount: number;
+};
+
 export type TEditArtifactRequest = {
   index: number;
   messageId: string;

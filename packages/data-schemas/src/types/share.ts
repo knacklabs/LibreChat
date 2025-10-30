@@ -65,3 +65,9 @@ export interface DeleteAllSharesResult {
   message: string;
   deletedCount: number;
 }
+
+export interface ContinueShareResult {
+  conversationId: string;
+  title: string;
+  messageCount: number;
+}

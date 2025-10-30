@@ -1,6 +1,7 @@
 const express = require('express');
 const { isEnabled } = require('@librechat/api');
 const { logger } = require('@librechat/data-schemas');
+const { createForkLimiters } = require('~/server/middleware/limiters/forkLimiters');
 const {
   getSharedMessages,
   createSharedLink,
@@ -8,6 +9,7 @@ const {
   deleteSharedLink,
   getSharedLinks,
   getSharedLink,
+  continueSharedConversation,
 } = require('~/models');
 const requireJwtAuth = require('~/server/middleware/requireJwtAuth');
 const router = express.Router();
@@ -138,6 +140,31 @@ router.delete('/:shareId', requireJwtAuth, async (req, res) => {
   } catch (error) {
     logger.error('Error deleting shared link:', error);
     return res.status(400).json({ message: 'Error deleting shared link' });
+  }
+});
+
+/**
+ * Continue a shared conversation by creating a copy in the user's account
+ */
+const { forkIpLimiter, forkUserLimiter } = createForkLimiters();
+router.post('/:shareId/continue', requireJwtAuth, forkIpLimiter, forkUserLimiter, async (req, res) => {
+  try {
+    const { shareId } = req.params;
+
+    const result = await continueSharedConversation(req.user.id, shareId);
+
+    return res.status(201).json(result);
+  } catch (error) {
+    logger.error('Error continuing shared conversation:', error);
+
+    // Handle specific error types
+    if (error.code === 'SHARE_NOT_FOUND') {
+      return res.status(404).json({ message: 'Shared conversation not found' });
+    } else if (error.code === 'CONVERSATION_NOT_FOUND') {
+      return res.status(404).json({ message: 'Original conversation not found' });
+    }
+
+    return res.status(500).json({ message: 'Error continuing shared conversation' });
   }
 });
 
