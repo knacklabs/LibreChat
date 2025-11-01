@@ -4,6 +4,9 @@ const { getUserKey, checkUserKeyExpiry } = require('~/server/services/UserServic
 const AnthropicClient = require('~/app/clients/AnthropicClient');
 
 const initializeClient = async ({ req, res, endpointOption, overrideModel, optionsOnly }) => {
+
+  console.log('[AnthropicInitialize] this is being called');
+  
   const appConfig = req.config;
   const { ANTHROPIC_API_KEY, ANTHROPIC_REVERSE_PROXY, PROXY,LITELLM_URL } = process.env;
   const expiresAt = req.body.key;

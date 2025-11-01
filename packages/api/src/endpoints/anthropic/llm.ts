@@ -40,6 +40,33 @@ function getLLMConfig(
 
   const mergedOptions = Object.assign(defaultOptions, options.modelOptions);
 
+  // Extract guardrails from mergedOptions or options.modelOptions
+  // Guardrails should be in mergedOptions because:
+  // 1. endpointOption.model_parameters.guardrails → extractLibreChatParams preserves it (not a LibreChat key)
+  // 2. modelOptions.guardrails → getOptions → options.modelOptions.guardrails → mergedOptions.guardrails
+  console.log('[getLLMConfig] Checking for guardrails:', {
+    hasGuardrailsInMergedOptions: !!(mergedOptions as Record<string, unknown>).guardrails,
+    hasGuardrailsInModelOptions: !!(options.modelOptions as Record<string, unknown>)?.guardrails,
+    mergedOptionsGuardrails: (mergedOptions as Record<string, unknown>).guardrails,
+    modelOptionsGuardrails: (options.modelOptions as Record<string, unknown>)?.guardrails,
+    mergedOptionsKeys: Object.keys(mergedOptions),
+    modelOptionsKeys: Object.keys(options.modelOptions || {}),
+  });
+  
+  const guardrails = 
+    (mergedOptions as Record<string, unknown>).guardrails ?? 
+    (options.modelOptions as Record<string, unknown>)?.guardrails;
+  
+  if (guardrails) {
+    delete (mergedOptions as Record<string, unknown>).guardrails;
+    if (options.modelOptions) {
+      delete (options.modelOptions as Record<string, unknown>).guardrails;
+    }
+    console.log('[getLLMConfig] Guardrails found and will be placed in invocationKwargs:', guardrails);
+  } else {
+    console.log('[getLLMConfig] No guardrails found in mergedOptions or modelOptions');
+  }
+
   let requestOptions: AnthropicClientOptions & { stream?: boolean } = {
     apiKey,
     model: mergedOptions.model,
@@ -55,6 +82,22 @@ function getLLMConfig(
       },
     },
   };
+  if (guardrails) {
+    // Place guardrails in invocationKwargs so they're included in the actual API request
+    requestOptions.invocationKwargs = {
+      ...(requestOptions.invocationKwargs || {}),
+      guardrails,
+    };
+    console.log('[getLLMConfig] Guardrails placed in invocationKwargs:', guardrails);
+  }
+  
+  console.log('[getLLMConfig] requestOptions structure:', {
+    hasClientOptions: !!requestOptions.clientOptions,
+    clientOptionsKeys: requestOptions.clientOptions ? Object.keys(requestOptions.clientOptions) : [],
+    hasInvocationKwargs: !!requestOptions.invocationKwargs,
+    invocationKwargsKeys: requestOptions.invocationKwargs ? Object.keys(requestOptions.invocationKwargs) : [],
+    invocationKwargsGuardrails: (requestOptions.invocationKwargs as Record<string, unknown>)?.guardrails,
+  });
 
   requestOptions = configureReasoning(requestOptions, systemOptions);
 
@@ -94,11 +137,23 @@ function getLLMConfig(
     });
   }
 
+  const llmConfig = removeNullishValues(
+    requestOptions as Record<string, unknown>,
+  ) as AnthropicClientOptions & { clientOptions?: { fetchOptions?: { dispatcher: Dispatcher } } };
+  
+  const invocationKwargs = (llmConfig as AnthropicClientOptions).invocationKwargs;
+  console.log('[getLLMConfig] Final llmConfig structure:', {
+    hasClientOptions: !!llmConfig.clientOptions,
+    clientOptionsKeys: llmConfig.clientOptions ? Object.keys(llmConfig.clientOptions) : [],
+    hasInvocationKwargs: !!invocationKwargs,
+    invocationKwargsKeys: invocationKwargs ? Object.keys(invocationKwargs) : [],
+    invocationKwargsGuardrails: (invocationKwargs as Record<string, unknown>)?.guardrails,
+    topLevelKeys: Object.keys(llmConfig),
+  });
+  
   return {
     tools,
-    llmConfig: removeNullishValues(
-      requestOptions as Record<string, unknown>,
-    ) as AnthropicClientOptions & { clientOptions?: { fetchOptions?: { dispatcher: Dispatcher } } },
+    llmConfig,
   };
 }
 

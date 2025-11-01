@@ -814,6 +814,13 @@ export const memorySchema = z.object({
 
 export type TMemoryConfig = DeepPartial<z.infer<typeof memorySchema>>;
 
+const guardrailsSchema = z.object({
+  defaultEnabled: z.boolean().optional(),
+  required: z.array(z.string()).optional(),
+});
+
+export type TGuardrailsConfig = DeepPartial<z.infer<typeof guardrailsSchema>>;
+
 const customEndpointsSchema = z.array(endpointSchema.partial()).optional();
 
 export const configSchema = z.object({
@@ -822,6 +829,7 @@ export const configSchema = z.object({
   ocr: ocrSchema.optional(),
   webSearch: webSearchSchema.optional(),
   memory: memorySchema.optional(),
+  guardrails: guardrailsSchema.optional(),
   secureImageLinks: z.boolean().optional(),
   imageOutputType: z.nativeEnum(EImageOutputType).default(EImageOutputType.PNG),
   includedTools: z.array(z.string()).optional(),

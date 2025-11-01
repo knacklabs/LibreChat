@@ -55,6 +55,8 @@ function createToolLoader(signal) {
 
 const initializeClient = async ({ req, res, signal, endpointOption }) => {
   
+  console.log('[AgentsInitialize] this is being called');
+  
   if (!endpointOption) {
     throw new Error('Endpoint option not provided');
   }

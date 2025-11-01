@@ -5,14 +5,28 @@ interface Guardrail {
   guardrail_name: string;
 }
 
-interface GuardrailsResponse {
-  guardrails: Guardrail[];
+interface DefaultConfig {
+  defaultEnabled: boolean;
+  required: string[];
 }
 
-const fetchGuardrails = async (): Promise<Guardrail[]> => {
+interface GuardrailsResponse {
+  guardrails: Guardrail[];
+  defaultConfig: DefaultConfig;
+}
+
+interface GuardrailsData {
+  availableGuardrails: string[];
+  defaultConfig: DefaultConfig;
+}
+
+const fetchGuardrails = async (): Promise<GuardrailsData> => {
   const data = await request.get<GuardrailsResponse>('/api/guardrails');
   console.log("Guardrails data from hook:", data);
-  return data.guardrails?.map((g: any) => g.guardrail_name) || [];
+  return {
+    availableGuardrails: data.guardrails?.map((g: any) => g.guardrail_name) || [],
+    defaultConfig: data.defaultConfig || { defaultEnabled: false, required: [] },
+  };
 };
 
 export const useGuardrails = () => {
