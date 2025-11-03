@@ -21,6 +21,10 @@ function getLLMConfig(
       options.modelOptions?.thinkingBudget ?? anthropicSettings.thinkingBudget.default,
   };
 
+  // Extract disableStreaming from modelOptions and convert to streaming
+  const disableStreaming = (options.modelOptions as Record<string, unknown>)?.disableStreaming === true;
+  const streaming = options.streaming ?? !disableStreaming;
+
   /** Couldn't figure out a way to still loop through the object while deleting the overlapping keys when porting this
    * over from javascript, so for now they are being deleted manually until a better way presents itself.
    */
@@ -35,7 +39,7 @@ function getLLMConfig(
   const defaultOptions = {
     model: anthropicSettings.model.default,
     maxOutputTokens: anthropicSettings.maxOutputTokens.default,
-    stream: true,
+    stream: streaming,
   };
 
   const mergedOptions = Object.assign(defaultOptions, options.modelOptions);
@@ -67,6 +71,17 @@ function getLLMConfig(
     console.log('[getLLMConfig] No guardrails found in mergedOptions or modelOptions');
   }
 
+  // Remove disableStreaming from mergedOptions as it's already been extracted and converted to stream
+  if ((mergedOptions as Record<string, unknown>)?.disableStreaming !== undefined) {
+    delete (mergedOptions as Record<string, unknown>).disableStreaming;
+  }
+
+  console.log('[getLLMConfig] Streaming configuration:', {
+    streamingFromOptions: options.streaming,
+    finalStream: streaming,
+    mergedOptionsStream: mergedOptions.stream,
+  });
+
   let requestOptions: AnthropicClientOptions & { stream?: boolean } = {
     apiKey,
     model: mergedOptions.model,
@@ -91,13 +106,13 @@ function getLLMConfig(
     console.log('[getLLMConfig] Guardrails placed in invocationKwargs:', guardrails);
   }
   
-  console.log('[getLLMConfig] requestOptions structure:', {
-    hasClientOptions: !!requestOptions.clientOptions,
-    clientOptionsKeys: requestOptions.clientOptions ? Object.keys(requestOptions.clientOptions) : [],
-    hasInvocationKwargs: !!requestOptions.invocationKwargs,
-    invocationKwargsKeys: requestOptions.invocationKwargs ? Object.keys(requestOptions.invocationKwargs) : [],
-    invocationKwargsGuardrails: (requestOptions.invocationKwargs as Record<string, unknown>)?.guardrails,
-  });
+  // console.log('[getLLMConfig] requestOptions structure:', {
+  //   hasClientOptions: !!requestOptions.clientOptions,
+  //   clientOptionsKeys: requestOptions.clientOptions ? Object.keys(requestOptions.clientOptions) : [],
+  //   hasInvocationKwargs: !!requestOptions.invocationKwargs,
+  //   invocationKwargsKeys: requestOptions.invocationKwargs ? Object.keys(requestOptions.invocationKwargs) : [],
+  //   invocationKwargsGuardrails: (requestOptions.invocationKwargs as Record<string, unknown>)?.guardrails,
+  // });
 
   requestOptions = configureReasoning(requestOptions, systemOptions);
 
@@ -142,14 +157,14 @@ function getLLMConfig(
   ) as AnthropicClientOptions & { clientOptions?: { fetchOptions?: { dispatcher: Dispatcher } } };
   
   const invocationKwargs = (llmConfig as AnthropicClientOptions).invocationKwargs;
-  console.log('[getLLMConfig] Final llmConfig structure:', {
-    hasClientOptions: !!llmConfig.clientOptions,
-    clientOptionsKeys: llmConfig.clientOptions ? Object.keys(llmConfig.clientOptions) : [],
-    hasInvocationKwargs: !!invocationKwargs,
-    invocationKwargsKeys: invocationKwargs ? Object.keys(invocationKwargs) : [],
-    invocationKwargsGuardrails: (invocationKwargs as Record<string, unknown>)?.guardrails,
-    topLevelKeys: Object.keys(llmConfig),
-  });
+  // console.log('[getLLMConfig] Final llmConfig structure:', {
+  //   hasClientOptions: !!llmConfig.clientOptions,
+  //   clientOptionsKeys: llmConfig.clientOptions ? Object.keys(llmConfig.clientOptions) : [],
+  //   hasInvocationKwargs: !!invocationKwargs,
+  //   invocationKwargsKeys: invocationKwargs ? Object.keys(invocationKwargs) : [],
+  //   invocationKwargsGuardrails: (invocationKwargs as Record<string, unknown>)?.guardrails,
+  //   topLevelKeys: Object.keys(llmConfig),
+  // });
   
   return {
     tools,

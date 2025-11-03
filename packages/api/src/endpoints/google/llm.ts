@@ -109,8 +109,50 @@ export function getGoogleConfig(
     web_search,
     thinking = googleSettings.thinking.default,
     thinkingBudget = googleSettings.thinkingBudget.default,
+    disableStreaming,
     ...modelOptions
   } = options.modelOptions || {};
+
+  // Convert disableStreaming to streaming (prioritize options.streaming if set)
+  const streaming = options.streaming ?? !disableStreaming;
+
+  // Extract guardrails from modelOptions or modelKwargs (OpenAI transform may put it there)
+  let guardrails = (modelOptions as Record<string, unknown>)?.guardrails;
+  
+  // Check in modelKwargs if not found at top level
+  if (!guardrails && (modelOptions as Record<string, unknown>)?.modelKwargs) {
+    const modelKwargs = (modelOptions as Record<string, unknown>).modelKwargs as Record<string, unknown>;
+    console.log('[getGoogleConfig] modelKwargs:', modelKwargs); 
+
+    guardrails = modelKwargs?.guardrails;
+    if (guardrails) {
+      console.log('[getGoogleConfig] Guardrails found in modelKwargs:', guardrails);
+      // Remove from modelKwargs after extracting
+      delete modelKwargs.guardrails;
+      
+      // Merge remaining modelKwargs into modelOptions
+      Object.assign(modelOptions, modelKwargs);
+      delete (modelOptions as Record<string, unknown>).modelKwargs;
+    }
+  }
+  
+  if (guardrails) {
+    delete (modelOptions as Record<string, unknown>).guardrails;
+    console.log('[getGoogleConfig] Guardrails will be placed as top-level parameter:', guardrails);
+  } else {
+    console.log('[getGoogleConfig] No guardrails found in modelOptions or modelKwargs');
+  }
+
+  // Remove disableStreaming from modelOptions as it's already been extracted and converted to streaming
+  if ((modelOptions as Record<string, unknown>)?.disableStreaming !== undefined) {
+    delete (modelOptions as Record<string, unknown>).disableStreaming;
+  }
+
+  console.log('[getGoogleConfig] Streaming configuration:', {
+    disableStreamingFromRequest: disableStreaming,
+    streamingFromOptions: options.streaming,
+    finalStreaming: streaming,
+  });
 
   const llmConfig: GoogleClientOptions | VertexAIClientOptions = removeNullishValues({
     ...(modelOptions || {}),
@@ -120,10 +162,21 @@ export function getGoogleConfig(
     topK: modelOptions?.topK ?? undefined,
     temperature: modelOptions?.temperature ?? undefined,
     maxOutputTokens: modelOptions?.maxOutputTokens ?? undefined,
+    streaming: streaming,
   });
 
   /** Used only for Safety Settings */
   llmConfig.safetySettings = getSafetySettings(llmConfig.model);
+
+  // Add guardrails via invocationKwargs (same pattern as Anthropic)
+  // While Google's type doesn't officially include invocationKwargs,
+  // we can add it at runtime and handle it in our monkey-patch
+  if (guardrails) {
+    (llmConfig as Record<string, unknown>).invocationKwargs = {
+      guardrails,
+    };
+    console.log('[getGoogleConfig] Guardrails placed in invocationKwargs:', guardrails);
+  }
 
   let provider;
 
@@ -192,12 +245,20 @@ export function getGoogleConfig(
       Authorization: `Bearer ${apiKey}`,
     };
   }
-
+  
   const tools: GoogleAIToolType[] = [];
 
   if (web_search) {
     tools.push({ googleSearch: {} });
   }
+
+  console.log('[getGoogleConfig] Final llmConfig structure:', {
+    hasGuardrails: !!(llmConfig as Record<string, unknown>).guardrails,
+    guardrailsValue: (llmConfig as Record<string, unknown>).guardrails,
+    hasCustomHeaders: !!(llmConfig as GoogleClientOptions).customHeaders,
+    customHeadersKeys: Object.keys((llmConfig as GoogleClientOptions).customHeaders || {}),
+    topLevelKeys: Object.keys(llmConfig),
+  });
 
   // Return the final shape
   return {

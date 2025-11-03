@@ -1298,6 +1298,19 @@ class AgentClient extends BaseClient {
       });
     }
 
+    // Add guardrails support for title generation
+    const guardrails =
+      agent.model_parameters?.guardrails ||
+      agent.model_parameters?.clientOptions?.guardrails;
+
+    if (Array.isArray(guardrails) && guardrails.length > 0) {
+      if (!clientOptions.modelKwargs) {
+        clientOptions.modelKwargs = {};
+      }
+      clientOptions.modelKwargs.guardrails = guardrails;
+      logger.debug('[AgentClient #titleConvo] Guardrails added to clientOptions:', guardrails);
+    }
+
     try {
       const titleResult = await this.run.generateTitle({
         provider,

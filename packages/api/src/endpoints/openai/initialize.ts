@@ -65,10 +65,12 @@ export const initializeOpenAI = async ({
     ? userValues?.baseURL
     : baseURLOptions[endpoint as keyof typeof baseURLOptions];
 
+  const disableStreaming = endpointOption.model_parameters?.disableStreaming === true;
+  
   const clientOptions: OpenAIConfigOptions = {
     proxy: PROXY ?? undefined,
     reverseProxyUrl: baseURL || undefined,
-    streaming: true,
+    streaming: !disableStreaming,
   };
 
   const isAzureOpenAI = endpoint === EModelEndpoint.azureOpenAI;

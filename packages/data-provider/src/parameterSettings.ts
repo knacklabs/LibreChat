@@ -440,7 +440,20 @@ const anthropic: Record<string, SettingDefinition> = {
     optionType: 'conversation',
     showDefault: false,
     columnSpan: 2,
-  },
+  }
+  // disableStreaming: {
+  //   key: 'disableStreaming',
+  //   label: 'com_endpoint_disable_streaming_label',
+  //   labelCode: true,
+  //   description: 'com_endpoint_disable_streaming',
+  //   descriptionCode: true,
+  //   type: 'boolean',
+  //   default: false,
+  //   component: 'switch',
+  //   optionType: 'model',
+  //   showDefault: false,
+  //   columnSpan: 2,
+  // } as const,
 };
 
 const bedrock: Record<string, SettingDefinition> = {
@@ -622,7 +635,20 @@ const google: Record<string, SettingDefinition> = {
     optionType: 'model',
     showDefault: false,
     columnSpan: 2,
-  },
+  }
+  // disableStreaming: {
+  //   key: 'disableStreaming',
+  //   label: 'com_endpoint_disable_streaming_label',
+  //   labelCode: true,
+  //   description: 'com_endpoint_disable_streaming',
+  //   descriptionCode: true,
+  //   type: 'boolean',
+  //   default: false,
+  //   component: 'switch',
+  //   optionType: 'model',
+  //   showDefault: false,
+  //   columnSpan: 2,
+  // } as const,
 };
 
 const googleConfig: SettingsConfiguration = [
@@ -637,6 +663,7 @@ const googleConfig: SettingsConfiguration = [
   google.thinking,
   google.thinkingBudget,
   google.web_search,
+  // google.disableStreaming,
   librechat.fileTokenLimit,
 ];
 
@@ -656,6 +683,7 @@ const googleCol2: SettingsConfiguration = [
   google.thinking,
   google.thinkingBudget,
   google.web_search,
+  // google.disableStreaming,
   librechat.fileTokenLimit,
 ];
 
@@ -718,6 +746,7 @@ const anthropicConfig: SettingsConfiguration = [
   anthropic.thinking,
   anthropic.thinkingBudget,
   anthropic.web_search,
+  // anthropic.disableStreaming,
   librechat.fileTokenLimit,
 ];
 
@@ -738,6 +767,7 @@ const anthropicCol2: SettingsConfiguration = [
   anthropic.thinking,
   anthropic.thinkingBudget,
   anthropic.web_search,
+  // anthropic.disableStreaming,
   librechat.fileTokenLimit,
 ];
 

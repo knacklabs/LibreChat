@@ -743,7 +743,7 @@ class AnthropicClient extends BaseClient {
     const { signal } = abortController;
 
     const modelOptions = { ...this.modelOptions };
-    if (typeof onProgress === 'function') {
+    if (typeof onProgress === 'function' && modelOptions.stream !== false) {
       modelOptions.stream = true;
     }
 

@@ -54,6 +54,8 @@ export interface AnthropicConfigOptions {
   proxy?: string | null;
   /** URL for a reverse proxy, if used */
   reverseProxyUrl?: string | null;
+  /** Whether to enable streaming */
+  streaming?: boolean;
 }
 
 /**
