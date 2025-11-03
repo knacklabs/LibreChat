@@ -57,6 +57,10 @@ export function deleteSharedLink(shareId: string): Promise<m.TDeleteSharedLinkRe
   return request.delete(endpoints.shareMessages(shareId));
 }
 
+export function continueSharedConversation(shareId: string): Promise<m.TContinueShareResponse> {
+  return request.post(endpoints.continueSharedConversation(shareId));
+}
+
 export function updateUserKey(payload: t.TUpdateUserKeyRequest) {
   const { value } = payload;
   if (!value) {

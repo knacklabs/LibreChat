@@ -919,22 +919,6 @@ class AgentClient extends BaseClient {
           customHandlers: this.options.eventHandlers,
         });
         
-        // if(run.Graph.clientOptions?.guardrails){
-        //   console.log('[AgentClient] Guardrails found in run.Graph.clientOptions:', run.Graph.clientOptions.guardrails);
-        // }
-        // if(run.Graph.clientOptions?.clientOptions?.guardrails){
-        //   console.log('[AgentClient] Guardrails found in run.Graph.clientOptions.clientOptions:', run.Graph.clientOptions.clientOptions.guardrails);
-        // }
-        // if(run.Graph.llmConfig?.clientOptions?.guardrails){
-        //   console.log('[AgentClient] Guardrails found in run.Graph.llmConfig.clientOptions:', run.Graph.llmConfig.clientOptions.guardrails);
-        // }
-        // if(this.options.agent?.model_parameters?.clientOptions?.guardrails){
-        //   console.log('[AgentClient] Guardrails found in this.options.agent?.model_parameters?.clientOptions:', this.options.agent?.model_parameters?.clientOptions.guardrails);
-        // }
-        // if(this.options.agent?.model_parameters?.guardrails){
-        //   console.log('[AgentClient] Guardrails found in this.options.agent?.model_parameters?.guardrails:', this.options.agent?.model_parameters?.guardrails);
-        // }
-        // Broad lookup to support multiple providers and graph layouts
         const guardrails =
           run.Graph.clientOptions?.guardrails ||
           run.Graph.clientOptions?.clientOptions?.guardrails ||

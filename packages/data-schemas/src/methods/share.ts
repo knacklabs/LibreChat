@@ -4,6 +4,7 @@ import type { FilterQuery, Model } from 'mongoose';
 import type { SchemaWithMeiliMethods } from '~/models/plugins/mongoMeili';
 import type * as t from '~/types';
 import logger from '~/config/winston';
+import { buildTree } from 'librechat-data-provider';
 
 class ShareServiceError extends Error {
   code: string;
@@ -519,6 +520,119 @@ export function createShareMethods(mongoose: typeof import('mongoose')) {
     }
   }
 
+  /**
+   * Continue a shared conversation by creating a copy in the recipient's account
+   */
+  async function continueSharedConversation(
+    user: string,
+    shareId: string,
+  ): Promise<t.ContinueShareResult> {
+    if (!user || !shareId) {
+      throw new ShareServiceError('Missing required parameters', 'INVALID_PARAMS');
+    }
+
+    try {
+      const SharedLink = mongoose.models.SharedLink as Model<t.ISharedLink>;
+      const Conversation = mongoose.models.Conversation as SchemaWithMeiliMethods;
+      const Message = mongoose.models.Message as SchemaWithMeiliMethods;
+
+      // Get the shared link
+      const share = (await SharedLink.findOne({ shareId, isPublic: true })
+        .populate({
+          path: 'messages',
+          select: '-_id -__v',
+        })
+        .select('-_id -__v')
+        .lean()) as (t.ISharedLink & { messages: t.IMessage[] }) | null;
+
+      if (!share?.conversationId || !share.isPublic) {
+        throw new ShareServiceError('Share not found or not public', 'SHARE_NOT_FOUND');
+      }
+
+      // Get the original conversation
+      const originalConvo = (await Conversation.findOne({
+        conversationId: share.conversationId
+      }).lean()) as t.IConversation | null;
+
+      if (!originalConvo) {
+        throw new ShareServiceError('Original conversation not found', 'CONVERSATION_NOT_FOUND');
+      }
+
+      // Filter messages based on targetMessageId if present (branch-specific sharing)
+      let messagesToCopy = share.messages;
+      if (share.targetMessageId) {
+        messagesToCopy = getMessagesUpToTarget(share.messages, share.targetMessageId);
+      }
+
+      // Create new conversation for the user
+      const newConvoId = `chat_${nanoid()}`;
+      const newTitle = `${share.title || 'Shared Chat'} (Continued)`;
+
+      // Create conversation document
+      const newConversation = {
+        conversationId: newConvoId,
+        title: newTitle,
+        user,
+        endpoint: originalConvo.endpoint,
+        model: originalConvo.model,
+        agent_id: originalConvo.agent_id,
+        assistant_id: originalConvo.assistant_id,
+        // Copy other relevant fields from original conversation
+        ...Object.fromEntries(
+          Object.entries(originalConvo).filter(([key]) =>
+            !['conversationId', 'title', 'user', '_id', '__v', 'createdAt', 'updatedAt'].includes(key)
+          )
+        ),
+      };
+
+      // Create new conversation
+      const conversation = await Conversation.create(newConversation);
+
+      // Copy messages with new IDs and user ownership
+      const messageIdMap = new Map<string, string>();
+      const newMessages = messagesToCopy.map((message) => {
+        const newMessageId = `${nanoid()}`;
+        messageIdMap.set(message.messageId, newMessageId);
+
+        return {
+          ...message,
+          messageId: newMessageId,
+          conversationId: newConvoId,
+          user,
+          parentMessageId: message.parentMessageId === Constants.NO_PARENT
+            ? Constants.NO_PARENT
+            : messageIdMap.get(message.parentMessageId) || message.parentMessageId,
+          // Clear any sensitive fields if needed
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      });
+
+      // Save messages in bulk
+      if (newMessages.length > 0) {
+        await Message.insertMany(newMessages);
+      }
+
+      logger.info(`User ${user} continued shared conversation ${shareId} as ${newConvoId}`);
+
+      return {
+        conversationId: newConvoId,
+        title: newTitle,
+        messageCount: newMessages.length,
+      };
+    } catch (error) {
+      if (error instanceof ShareServiceError) {
+        throw error;
+      }
+      logger.error('[continueSharedConversation] Error continuing shared conversation', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        user,
+        shareId,
+      });
+      throw new ShareServiceError('Error continuing shared conversation', 'CONTINUE_ERROR');
+    }
+  }
+
   // Return all methods
   return {
     getSharedLink,
@@ -527,6 +641,7 @@ export function createShareMethods(mongoose: typeof import('mongoose')) {
     updateSharedLink,
     deleteSharedLink,
     getSharedMessages,
+    continueSharedConversation,
     deleteAllSharedLinks,
   };
 }
