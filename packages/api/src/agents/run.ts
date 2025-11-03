@@ -82,27 +82,6 @@ export async function createRun({
     agent.model_parameters,
   );
 
-  // Ensure guardrails are properly configured for the HTTP request
-  if (llmConfig.guardrails && Array.isArray(llmConfig.guardrails) && llmConfig.guardrails.length > 0) {
-    console.log('[createRun] Guardrails found in llmConfig:', llmConfig.guardrails);
-    
-    // Add guardrails to metadata field (correct LiteLLM format)
-    if (!llmConfig.metadata) {
-      llmConfig.metadata = {};
-    }
-    
-    // LiteLLM expects guardrails as an array in metadata
-    llmConfig.metadata.guardrails = llmConfig.guardrails;
-    console.log('[createRun] Added guardrails to metadata:', llmConfig.metadata.guardrails);
-    
-    // Also add to extra_body for backward compatibility
-    if (!llmConfig.extra_body) {
-      llmConfig.extra_body = {};
-    }
-    llmConfig.extra_body.guardrails = llmConfig.guardrails;
-    console.log('[createRun] Added guardrails to extra_body:', llmConfig.extra_body.guardrails);
-  }
-
   /** Resolves issues with new OpenAI usage field */
   if (
     customProviders.has(agent.provider) ||

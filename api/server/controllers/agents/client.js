@@ -97,9 +97,6 @@ function logToolError(graph, error, toolId) {
 
 class AgentClient extends BaseClient {
   constructor(options = {}) {
-    console.log('[AgentClient] ===== AGENT CLIENT CONSTRUCTOR CALLED =====');
-    console.log('[AgentClient] Constructor options.agent.model_parameters:', JSON.stringify(options.agent?.model_parameters, null, 2));
-    console.log('[AgentClient] Constructor options.agent.model_parameters.extra_body:', JSON.stringify(options.agent?.model_parameters?.extra_body, null, 2));
     
     super(null, options);
     /** The current client class
@@ -241,11 +238,24 @@ class AgentClient extends BaseClient {
     /** @type {number | undefined} */
     let promptTokens;
 
+    let guardrail_prompt = '';
+
+    if (
+      this.options.agent?.model_parameters?.guardrails &&
+      this.options.agent.model_parameters.guardrails.length > 0
+    ) {
+      guardrail_prompt = process.env.GUARDRAILS_PROMPT_PREFIX || '';
+    } else {
+      console.log('[AgentClient] No guardrails prompt');
+    }
+
     /** @type {string} */
-    let systemContent = [instructions ?? '', additional_instructions ?? '']
+    let systemContent = [instructions ?? '', additional_instructions ?? '', guardrail_prompt]
       .filter(Boolean)
       .join('\n')
       .trim();
+    
+    // console.log('[AgentClient] System content:', systemContent);
 
     if (this.options.attachments) {
       const attachments = await this.options.attachments;
@@ -773,6 +783,8 @@ class AgentClient extends BaseClient {
       if (!abortController) {
         abortController = new AbortController();
       }
+    // console.log('[AgentClient] chatcompletion called');
+    // console.log('[AgentClient] chatcompletion model_parameters:', JSON.stringify(this.options.agent.model_parameters, null, 2));
 
       const appConfig = this.options.req.config;
       /** @type {AppConfig['endpoints']['agents']} */
@@ -893,12 +905,6 @@ class AgentClient extends BaseClient {
           });
         }
 
-        console.log('[AgentClient] About to create run with agent:', JSON.stringify(agent, null, 2));
-        console.log('[AgentClient] Agent model_parameters:', JSON.stringify(agent.model_parameters, null, 2));
-        console.log('[AgentClient] Agent model_parameters.extra_body:', JSON.stringify(agent.model_parameters?.extra_body, null, 2));
-        console.log('[AgentClient] Agent model_parameters.extra_body.metadata:', JSON.stringify(agent.model_parameters?.extra_body?.metadata, null, 2));
-        console.log('[AgentClient] Agent model_parameters.extra_body.metadata.guardrails:', JSON.stringify(agent.model_parameters?.extra_body?.metadata?.guardrails, null, 2));
-        
         run = await createRun({
           agent,
           req: this.options.req,
@@ -907,60 +913,15 @@ class AgentClient extends BaseClient {
           customHandlers: this.options.eventHandlers,
         });
         
-        console.log('[AgentClient] Run created successfully');
-        console.log('[AgentClient] Run Graph clientOptions:', JSON.stringify(run.Graph.clientOptions, null, 2));
-        console.log('[AgentClient] boundModel type:', typeof run.Graph.boundModel);
-        console.log('[AgentClient] boundModel keys:', Object.keys(run.Graph.boundModel));
-        console.log('[AgentClient] boundModel has kwargs property:', 'kwargs' in run.Graph.boundModel);
-        console.log('[AgentClient] boundModel kwargs via dot notation:', run.Graph.boundModel.kwargs);
-        console.log('[AgentClient] boundModel kwargs via bracket notation:', run.Graph.boundModel['kwargs']);
-        console.log('[AgentClient] boundModel full structure:', JSON.stringify(run.Graph.boundModel, null, 2));
         
         // Try to manually add guardrails to the LangChain model
         if (run.Graph.clientOptions.guardrails) {
-          console.log('[AgentClient] Guardrails found in clientOptions:', run.Graph.clientOptions.guardrails);
-          
-          // Try adding guardrails to the LangChain model properties
-          console.log('[AgentClient] Adding guardrails to boundModel properties');
-          
+                    
           // Try adding to modelKwargs
           if (!run.Graph.boundModel.modelKwargs) {
             run.Graph.boundModel.modelKwargs = {};
           }
           run.Graph.boundModel.modelKwargs.guardrails = run.Graph.clientOptions.guardrails;
-          console.log('[AgentClient] Added guardrails to modelKwargs:', run.Graph.boundModel.modelKwargs.guardrails);
-          
-          // Try adding to clientConfig
-          if (!run.Graph.boundModel.clientConfig) {
-            run.Graph.boundModel.clientConfig = {};
-          }
-          run.Graph.boundModel.clientConfig.guardrails = run.Graph.clientOptions.guardrails;
-          console.log('[AgentClient] Added guardrails to clientConfig:', run.Graph.boundModel.clientConfig.guardrails);
-          
-          // Try adding directly to the model
-          run.Graph.boundModel.guardrails = run.Graph.clientOptions.guardrails;
-          console.log('[AgentClient] Added guardrails directly to model:', run.Graph.boundModel.guardrails);
-          
-          // Log the current state of boundModel.kwargs
-          if (run.Graph.boundModel.kwargs) {
-            console.log('[AgentClient] Current boundModel.kwargs:', JSON.stringify(run.Graph.boundModel.kwargs, null, 2));
-            console.log('[AgentClient] boundModel.kwargs has guardrails:', !!run.Graph.boundModel.kwargs.guardrails);
-            console.log('[AgentClient] boundModel.kwargs guardrails value:', run.Graph.boundModel.kwargs.guardrails);
-          } else {
-            console.log('[AgentClient] boundModel.kwargs is undefined - checking alternative properties');
-            console.log('[AgentClient] boundModel keys:', Object.keys(run.Graph.boundModel));
-            console.log('[AgentClient] boundModel type:', typeof run.Graph.boundModel);
-            
-            // Check if there are alternative ways to access the kwargs
-            if (run.Graph.boundModel.lc_kwargs) {
-              console.log('[AgentClient] Found lc_kwargs:', JSON.stringify(run.Graph.boundModel.lc_kwargs, null, 2));
-            }
-            if (run.Graph.boundModel.modelKwargs) {
-              console.log('[AgentClient] Found modelKwargs:', JSON.stringify(run.Graph.boundModel.modelKwargs, null, 2));
-            }
-          }
-          
-          console.log('[AgentClient] Final boundModel structure:', JSON.stringify(run.Graph.boundModel, null, 2));
           
         } else {
           console.log('[AgentClient] No guardrails in clientOptions to add');

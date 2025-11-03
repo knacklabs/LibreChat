@@ -85,6 +85,17 @@ async function buildEndpointOption(req, res, next) {
     // TODO: use object params
     req.body.endpointOption = await builder(endpoint, parsedBody, endpointType);
 
+
+    // Handle guardrails promptPrefix for agents endpoint
+    if (isAgents && req.body.guardrails && Array.isArray(req.body.guardrails) && req.body.guardrails.length > 0) {
+      if (req.body.endpointOption && req.body.endpointOption.model_parameters) {
+        req.body.endpointOption.model_parameters.guardrails = req.body.guardrails;
+      }
+    } else if (isAgents && req.body.endpointOption && req.body.endpointOption.model_parameters) {
+      logger.debug('[buildEndpointOption] No guardrails');
+    }
+
+
     if (req.body.files && !isAgents) {
       req.body.endpointOption.attachments = processFiles(req.body.files);
     }
