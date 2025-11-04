@@ -80,13 +80,13 @@ export async function createRun({
   const modelStreaming = modelParams?.streaming ?? modelParams?.stream;
   const finalStreaming = modelStreaming !== undefined ? (modelStreaming as boolean) : streaming;
   
-  console.log('[createRun] Streaming configuration:', {
-    provider: agent.provider,
-    modelParametersStreaming: modelParams?.streaming,
-    modelParametersStream: modelParams?.stream,
-    defaultStreaming: streaming,
-    finalStreaming,
-  });
+  // console.log('[createRun] Streaming configuration:', {
+  //   provider: agent.provider,
+  //   modelParametersStreaming: modelParams?.streaming,
+  //   modelParametersStream: modelParams?.stream,
+  //   defaultStreaming: streaming,
+  //   finalStreaming,
+  // });
   
   const llmConfig: t.RunLLMConfig = Object.assign(
     {},
