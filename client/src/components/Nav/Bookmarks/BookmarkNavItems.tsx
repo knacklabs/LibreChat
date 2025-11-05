@@ -1,7 +1,8 @@
-import { type FC } from 'react';
+import { type FC, useState, useMemo } from 'react';
 import { CrossCircledIcon } from '@radix-ui/react-icons';
+import { Input } from '@librechat/client';
 import type { TConversationTag } from 'librechat-data-provider';
-import { useBookmarkContext } from '~/Providers/BookmarkContext';
+import { BookmarkContext, useBookmarkContext } from '~/Providers/BookmarkContext';
 import { BookmarkItems, BookmarkItem, DeleteBookmarkButton, EditBookmarkButton } from '~/components/Bookmarks';
 import { useLocalize } from '~/hooks';
 
@@ -13,6 +14,16 @@ const BookmarkNavItems: FC<{
 }> = ({ tags = [], setTags, onEditBookmark, onDeleteBookmark }) => {
   const { bookmarks } = useBookmarkContext();
   const localize = useLocalize();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredBookmarks = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return bookmarks;
+    }
+    return bookmarks.filter((bookmark) =>
+      bookmark.tag.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }, [bookmarks, searchQuery]);
 
   const getUpdatedSelected = (tag: string) => {
     if (tags.some((selectedTag) => selectedTag === tag)) {
@@ -105,20 +116,45 @@ const BookmarkNavItems: FC<{
 
   return (
     <div className="flex flex-col">
-      <BookmarkItems
-        tags={tags}
-        handleSubmit={handleSubmit}
-        renderActions={renderActions}
-        header={
-          <BookmarkItem
-            tag={localize('com_ui_clear_all')}
-            data-testid="bookmark-item-clear"
-            handleSubmit={clear}
-            selected={false}
-            icon={<CrossCircledIcon className="size-4" />}
+      {/* Search/Filter Input with Clear All button */}
+      <div className="flex items-center gap-2 px-2 pb-2 border-b border-border-light">
+        <Input
+          placeholder={localize('com_ui_bookmarks_filter')}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="h-9 text-sm flex-1"
+          aria-label={localize('com_ui_bookmarks_filter')}
+        />
+        {tags.length > 0 && (
+          <button
+            onClick={clear}
+            className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded transition-colors whitespace-nowrap"
+            aria-label={localize('com_ui_clear_all')}
+            data-testid="bookmark-clear-all"
+          >
+            <CrossCircledIcon className="size-3.5" />
+            {localize('com_ui_clear_all')}
+          </button>
+        )}
+      </div>
+
+      {/* Bookmarks List */}
+      <div className="py-1">
+        <BookmarkContext.Provider value={{ bookmarks: filteredBookmarks }}>
+          <BookmarkItems
+            tags={tags}
+            handleSubmit={handleSubmit}
+            renderActions={renderActions}
           />
-        }
-      />
+        </BookmarkContext.Provider>
+      </div>
+
+      {/* No results message */}
+      {searchQuery && filteredBookmarks.length === 0 && (
+        <div className="px-2 py-3 text-center text-sm text-text-secondary">
+          {localize('com_ui_no_results_found')}
+        </div>
+      )}
     </div>
   );
 };

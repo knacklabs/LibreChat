@@ -129,13 +129,14 @@ export default function useSideNavLinks({
       });
     }
 
-    links.push({
-      title: 'com_sidepanel_attach_files',
-      label: '',
-      icon: AttachmentIcon,
-      id: 'files',
-      Component: FilesPanel,
-    });
+    // Files panel removed - now accessible from chat attach menu
+    // links.push({
+    //   title: 'com_sidepanel_attach_files',
+    //   label: '',
+    //   icon: AttachmentIcon,
+    //   id: 'files',
+    //   Component: FilesPanel,
+    // });
 
     // if (hasAccessToBookmarks) {
     //   links.push({

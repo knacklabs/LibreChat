@@ -40,15 +40,33 @@ import store from '~/store';
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  showSelection?: boolean;
 }
 
-export default function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
+export default function DataTable<TData, TValue>({ columns, data, showSelection = false }: DataTableProps<TData, TValue>) {
   const localize = useLocalize();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [{ pageIndex, pageSize }, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const setShowFiles = useSetRecoilState(store.showFiles);
+
+  // Get context data early for attachedFileIds
+  const fileMap = useFileMapContext();
+  const { showToast } = useToastContext();
+  const { setFiles, conversation, files: attachedFiles } = useChatContext();
+  const { data: fileConfig = defaultFileConfig } = useGetFileConfig({
+    select: (data) => mergeFileConfig(data),
+  });
+  const { addFile } = useUpdateFiles(setFiles);
+
+  // Track which files are currently attached for selection indicator
+  const attachedFileIds = useMemo(() => {
+    if (!showSelection || !attachedFiles) {
+      return new Set<string>();
+    }
+    return new Set(Array.from(attachedFiles.values()).map((f) => f.file_id));
+  }, [showSelection, attachedFiles]);
 
   const pagination = useMemo(
     () => ({
@@ -81,15 +99,11 @@ export default function DataTable<TData, TValue>({ columns, data }: DataTablePro
       maxSize: 10,
       enableResizing: true,
     },
+    meta: {
+      showSelection,
+      attachedFileIds,
+    },
   });
-
-  const fileMap = useFileMapContext();
-  const { showToast } = useToastContext();
-  const { setFiles, conversation } = useChatContext();
-  const { data: fileConfig = defaultFileConfig } = useGetFileConfig({
-    select: (data) => mergeFileConfig(data),
-  });
-  const { addFile } = useUpdateFiles(setFiles);
 
   const handleFileClick = useCallback(
     (file: TFile) => {
@@ -97,6 +111,18 @@ export default function DataTable<TData, TValue>({ columns, data }: DataTablePro
         showToast({
           message: localize('com_ui_attach_error'),
           status: 'error',
+        });
+        return;
+      }
+
+      // Check if file is already attached - if so, remove it (toggle behavior)
+      if (attachedFiles && attachedFiles.has(file.file_id)) {
+        const newFiles = new Map(attachedFiles);
+        newFiles.delete(file.file_id);
+        setFiles(newFiles);
+        showToast({
+          message: `${localize('com_ui_attach_remove')}: ${file.filename}`,
+          status: 'success',
         });
         return;
       }
@@ -162,7 +188,7 @@ export default function DataTable<TData, TValue>({ columns, data }: DataTablePro
         metadata: fileData.metadata,
       });
     },
-    [addFile, fileMap, conversation, localize, showToast, fileConfig.endpoints],
+    [addFile, fileMap, conversation, localize, showToast, fileConfig.endpoints, attachedFiles, setFiles],
   );
 
   const filenameFilter = table.getColumn('filename')?.getFilterValue() as string;
