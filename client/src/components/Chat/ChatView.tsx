@@ -15,7 +15,6 @@ import Presentation from './Presentation';
 import ChatForm from './Input/ChatForm';
 import Landing from './Landing';
 import Header from './Header';
-import ParametersDrawer from './ParametersDrawer';
 import Footer from './Footer';
 import { cn } from '~/utils';
 import store from '~/store';
@@ -37,7 +36,6 @@ function ChatView({ index = 0 }: { index?: number }) {
   const centerFormOnLanding = useRecoilValue(store.centerFormOnLanding);
 
   const fileMap = useFileMapContext();
-  const showParameters = useRecoilValue(store.showParametersDrawer);
 
   const { data: messagesTree = null, isLoading } = useGetMessagesByConvoId(conversationId ?? '', {
     select: useCallback(
@@ -81,12 +79,7 @@ function ChatView({ index = 0 }: { index?: number }) {
       <ChatContext.Provider value={chatHelpers}>
         <AddedChatContext.Provider value={addedChatHelpers}>
           <Presentation>
-            <div
-              className={cn(
-                'flex h-full w-full flex-col',
-                showParameters && 'pr-[340px] sm:pr-[352px] transition-[padding] duration-200',
-              )}
-            >
+            <div className="flex h-full w-full flex-col">
               {!isLoading && <Header />}
               <>
                 <div
@@ -109,7 +102,6 @@ function ChatView({ index = 0 }: { index?: number }) {
                   </div>
                 </div>
                 {isLandingPage && <Footer />}
-                <ParametersDrawer />
               </>
             </div>
           </Presentation>
