@@ -114,20 +114,21 @@ export default function useSideNavLinks({
       });
     }
 
-    if (
-      interfaceConfig.parameters === true &&
-      isParamEndpoint(endpoint ?? '', endpointType ?? '') === true &&
-      !isAgentsEndpoint(endpoint) &&
-      keyProvided
-    ) {
-      links.push({
-        title: 'com_sidepanel_parameters',
-        label: '',
-        icon: Settings2,
-        id: 'parameters',
-        Component: Parameters,
-      });
-    }
+    // Parameters panel moved to chat header (beside share button)
+    // if (
+    //   interfaceConfig.parameters === true &&
+    //   isParamEndpoint(endpoint ?? '', endpointType ?? '') === true &&
+    //   !isAgentsEndpoint(endpoint) &&
+    //   keyProvided
+    // ) {
+    //   links.push({
+    //     title: 'com_sidepanel_parameters',
+    //     label: '',
+    //     icon: Settings2,
+    //     id: 'parameters',
+    //     Component: Parameters,
+    //   });
+    // }
 
     // Files panel removed - now accessible from chat attach menu
     // links.push({
