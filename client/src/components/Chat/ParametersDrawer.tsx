@@ -2,7 +2,6 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { useRecoilState } from 'recoil';
 import Parameters from '~/components/SidePanel/Parameters/Panel';
-import { Button } from '@librechat/client';
 import store from '~/store';
 
 export default function ParametersDrawer() {
@@ -24,9 +23,14 @@ export default function ParametersDrawer() {
     >
       <div className="flex items-center justify-between border-b border-border-light p-3">
         <h2 className="text-sm font-semibold">Parameters</h2>
-        <Button variant="ghost" className="h-8 w-8 p-0" aria-label="Close" onClick={handleClose}>
+        <button
+          type="button"
+          className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-surface-hover text-text-primary transition-colors"
+          aria-label="Close"
+          onClick={handleClose}
+        >
           <X className="h-4 w-4" />
-        </Button>
+        </button>
       </div>
       <div className="flex-1 overflow-y-auto p-3">
         <Parameters />
