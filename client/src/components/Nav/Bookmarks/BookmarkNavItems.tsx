@@ -144,6 +144,7 @@ const BookmarkNavItems: FC<{
           <BookmarkItems
             tags={tags}
             handleSubmit={handleSubmit}
+            header={null}
             renderActions={renderActions}
           />
         </BookmarkContext.Provider>
