@@ -1061,7 +1061,7 @@ ${convo}
 
       let modelOptions = { ...this.modelOptions };
 
-      if (typeof onProgress === 'function') {
+      if (typeof onProgress === 'function' && modelOptions.stream !== false) {
         modelOptions.stream = true;
       }
       if (this.isChatCompletion) {

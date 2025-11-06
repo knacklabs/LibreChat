@@ -1,5 +1,5 @@
 const express = require('express');
-const { fetchGuardrails } = require('~/server/services/GuardrailsService');
+const { fetchGuardrails, validateRequiredGuardrails } = require('~/server/services/GuardrailsService');
 const { logger } = require('@librechat/data-schemas');
 const configMiddleware = require('~/server/middleware/config/app');
 const requireJwtAuth = require('~/server/middleware/requireJwtAuth');
@@ -11,7 +11,7 @@ router.use(configMiddleware);
 
 /**
  * GET /api/guardrails
- * Fetches available guardrails from LiteLLM
+ * Fetches available guardrails from LiteLLM and returns default config
  */
 router.get('/', async (req, res) => {
   try {
@@ -48,7 +48,44 @@ router.get('/', async (req, res) => {
 
     const guardrails = await fetchGuardrails(baseURL, headers);
     
-    res.json({ guardrails });
+    // Get guardrails config from app config
+    const guardrailsConfig = req.config?.guardrails || {};
+    const defaultEnabled = guardrailsConfig.defaultEnabled || false;
+    const requiredGuardrails = guardrailsConfig.required || [];
+
+    // Debug logging
+    logger.info('[GuardrailsRoute] Config Debug:', {
+      hasConfig: !!req.config,
+      hasGuardrailsConfig: !!req.config?.guardrails,
+      guardrailsConfig,
+      defaultEnabled,
+      requiredGuardrails,
+    });
+
+    // Validate required guardrails if defaultEnabled is true
+    if (defaultEnabled && requiredGuardrails.length > 0) {
+      const validation = validateRequiredGuardrails(requiredGuardrails, guardrails);
+      
+      if (!validation.isValid) {
+        logger.error('[GuardrailsRoute] Invalid guardrails in config:', {
+          invalid: validation.invalidGuardrails,
+          available: guardrails.map(g => g.guardrail_name || g),
+        });
+        return res.status(400).json({
+          error: 'Invalid guardrails configuration',
+          message: `The following guardrails are not available in LiteLLM: ${validation.invalidGuardrails.join(', ')}`,
+          invalidGuardrails: validation.invalidGuardrails,
+        });
+      }
+    }
+    
+    res.json({
+      guardrails,
+      defaultConfig: {
+        defaultEnabled,
+        required: requiredGuardrails,
+      },
+    });
   } catch (error) {
     logger.error('[GuardrailsRoute] Error fetching guardrails:', error);
     res.status(500).json({ error: 'Failed to fetch guardrails' });

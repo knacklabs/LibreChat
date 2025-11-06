@@ -55,6 +55,8 @@ export interface AppConfig {
   memory?: TMemoryConfig;
   /** Web search configuration */
   webSearch?: TCustomConfig['webSearch'];
+  /** Guardrails configuration */
+  guardrails?: TCustomConfig['guardrails'];
   /** File storage strategy ('local', 's3', 'firebase', 'azure_blob') */
   fileStrategy: FileSources.local | FileSources.s3 | FileSources.firebase | FileSources.azure_blob;
   /** File strategies configuration */

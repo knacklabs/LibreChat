@@ -1,4 +1,5 @@
 const { logger } = require('@librechat/data-schemas');
+
 /**
  * Fetches available guardrails from LiteLLM endpoint
  * @param {string} baseURL - The LiteLLM base URL
@@ -28,6 +29,32 @@ async function fetchGuardrails(baseURL, headers = {}) {
   }
 }
 
+/**
+ * Validates that required guardrails exist in available guardrails
+ * @param {Array<string>} requiredGuardrails - Required guardrails from config
+ * @param {Array<Object>} availableGuardrails - Available guardrails from LiteLLM
+ * @returns {Object} Validation result with isValid flag and invalid guardrails list
+ */
+function validateRequiredGuardrails(requiredGuardrails, availableGuardrails) {
+  if (!requiredGuardrails || requiredGuardrails.length === 0) {
+    return { isValid: true, invalidGuardrails: [] };
+  }
+
+  const availableNames = new Set(
+    availableGuardrails.map(g => g.guardrail_name || g)
+  );
+
+  const invalidGuardrails = requiredGuardrails.filter(
+    name => !availableNames.has(name)
+  );
+
+  return {
+    isValid: invalidGuardrails.length === 0,
+    invalidGuardrails,
+  };
+}
+
 module.exports = {
   fetchGuardrails,
+  validateRequiredGuardrails,
 };

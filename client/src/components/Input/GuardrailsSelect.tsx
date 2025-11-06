@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocalize } from '~/hooks';
 import { useGuardrails } from '~/hooks/useGuardrails';
@@ -8,7 +8,7 @@ import {
   Listbox,
   ListboxButton,
 } from '@headlessui/react';
-import { Shield, ChevronDown } from 'lucide-react';
+import { Shield, ChevronDown, Lock } from 'lucide-react';
 import { cn } from '~/utils';
 
 interface GuardrailsSelectProps {
@@ -28,7 +28,6 @@ export default function GuardrailsSelect({
 
   const localize = useLocalize();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedGuardrails, setSelectedGuardrails] = useState<string[]>([]);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [buttonPosition, setButtonPosition] = useState({
@@ -38,7 +37,34 @@ export default function GuardrailsSelect({
     height: 0,
   });
 
-  const { data: guardrails = [], isLoading, error } = useGuardrails();
+  const { data, isLoading, error } = useGuardrails();
+  const guardrails = data?.availableGuardrails || [];
+  const defaultConfig = data?.defaultConfig || { defaultEnabled: false, required: [] };
+  const isDisabled = defaultConfig.defaultEnabled;
+
+  // Derive selected guardrails from state (no useEffect needed)
+  const selectedGuardrails = useMemo(() => {
+    if (isDisabled && defaultConfig.required.length > 0) {
+      // Show default guardrails when disabled (backend will enforce these)
+      return defaultConfig.required;
+    } else if (conversation?.guardrails) {
+      // Show user-selected guardrails when not disabled
+      return conversation.guardrails;
+    }
+    // No guardrails selected
+    return [];
+  }, [isDisabled, defaultConfig.required, conversation?.guardrails]);
+
+  // Debug logging
+  console.log('[GuardrailsSelect] Debug Info:', {
+    data,
+    guardrails,
+    defaultConfig,
+    isDisabled,
+    defaultEnabled: defaultConfig.defaultEnabled,
+    required: defaultConfig.required,
+    selectedGuardrails,
+  });
 
   useOnClickOutside(menuRef, () => setIsOpen(false));
 
@@ -55,23 +81,19 @@ export default function GuardrailsSelect({
     }
   }, [isOpen]);
 
-  // Initialize selected guardrails
-  useEffect(() => {
-    if (conversation?.guardrails) {
-      setSelectedGuardrails(conversation.guardrails);
-    }
-  }, [conversation?.guardrails]);
-
   const handleGuardrailToggle = (guardrailName: string) => {
-    setSelectedGuardrails(prev => {
-      const newSelection = prev.includes(guardrailName)
-        ? prev.filter(name => name !== guardrailName)
-        : [...prev, guardrailName];
+    // Prevent toggling when disabled
+    if (isDisabled) {
+      return;
+    }
+    
+    const currentSelection = conversation?.guardrails || [];
+    const newSelection = currentSelection.includes(guardrailName)
+      ? currentSelection.filter((name: string) => name !== guardrailName)
+      : [...currentSelection, guardrailName];
 
-      console.log('Updating guardrails:', newSelection);
-      setOption('guardrails')(newSelection);
-      return newSelection;
-    });
+    console.log('Updating guardrails:', newSelection);
+    setOption('guardrails')(newSelection);
   };
 
   if (isLoading) {
@@ -96,6 +118,12 @@ export default function GuardrailsSelect({
     return null;
   }
 
+  // OPTION 1: HIDE COMPLETELY when defaultEnabled is true
+  // Uncomment this block to hide the guardrails selector entirely when locked
+  // if (isDisabled) {
+  //   return null;
+  // }
+
   return (
     <div className="relative w-full">
       <Listbox value={selectedGuardrails} onChange={() => {}}>
@@ -103,25 +131,44 @@ export default function GuardrailsSelect({
           <>
             <ListboxButton
               ref={buttonRef}
+              disabled={isDisabled}
               className={cn(
-                'relative flex w-full cursor-default items-center justify-between rounded-md border border-black/10 bg-white py-2 pl-3 pr-3 text-left focus:outline-none dark:border-gray-600 dark:bg-gray-800 sm:text-sm'
+                'relative flex w-full items-center justify-between rounded-md border border-black/10 bg-white py-2 pl-3 pr-3 text-left focus:outline-none dark:border-gray-600 dark:bg-gray-800 sm:text-sm',
+                isDisabled 
+                  ? 'cursor-not-allowed opacity-60 bg-gray-100 dark:bg-gray-700' 
+                  : 'cursor-default'
               )}
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={() => !isDisabled && setIsOpen(!isOpen)}
+              title={isDisabled ? 'Guardrails are locked by administrator' : undefined}
             >
               <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-gray-500" />
-                <span className="text-gray-800 dark:text-white">
+                {isDisabled ? (
+                  <Lock className="h-4 w-4 text-orange-500" />
+                ) : (
+                  <Shield className="h-4 w-4 text-gray-500" />
+                )}
+                <span className={cn(
+                  'text-gray-800 dark:text-white',
+                  isDisabled && 'font-medium'
+                )}>
                   {selectedGuardrails.length === 0
                     ? 'No guardrails selected'
                     : `${selectedGuardrails.length} guardrail${selectedGuardrails.length > 1 ? 's' : ''} selected`}
+                  {isDisabled && (
+                    <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
+                      (Default Enabled)
+                    </span>
+                  )}
                 </span>
               </div>
-              <ChevronDown
-                className={cn('h-4 w-4 text-gray-400 transition-transform', isOpen && 'rotate-180')}
-              />
+              {!isDisabled && (
+                <ChevronDown
+                  className={cn('h-4 w-4 text-gray-400 transition-transform', isOpen && 'rotate-180')}
+                />
+              )}
             </ListboxButton>
 
-            {isOpen &&
+            {isOpen && !isDisabled &&
               createPortal(
                 <div
                   ref={menuRef}

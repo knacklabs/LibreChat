@@ -37,11 +37,22 @@ const initializeClient = async ({ req, res, endpointOption, overrideModel, optio
     }
   }
   const shouldUseOpenIdAuth = GOOGLE_KEY === 'openid';
+  // const credentials = isUserProvided
+  //   ? userKey
+  //   : {
+  //       [AuthKeys.GOOGLE_SERVICE_KEY]: serviceKey,
+  //       [AuthKeys.GOOGLE_API_KEY]: req.headers.authorization,
+  //     };
+  let googleApiKey = GOOGLE_KEY;
+  if (shouldUseOpenIdAuth) {
+    googleApiKey = req.headers.authorization;
+  }
+
   const credentials = isUserProvided
     ? userKey
     : {
         [AuthKeys.GOOGLE_SERVICE_KEY]: serviceKey,
-        [AuthKeys.GOOGLE_API_KEY]: req.headers.authorization,
+        [AuthKeys.GOOGLE_API_KEY]: googleApiKey,  // Use the conditional key
       };
 
   let clientOptions = {};
