@@ -560,6 +560,12 @@ export const interfaceSchema = z
       .optional(),
     fileSearch: z.boolean().optional(),
     fileCitations: z.boolean().optional(),
+    artifacts: z
+      .object({
+        defaultEnabled: z.boolean().optional(),
+        mode: z.enum(['default', 'shadcnui', 'custom']).optional(),
+      })
+      .optional(),
   })
   .default({
     endpointsMenu: true,

@@ -10,6 +10,7 @@ const staticAtoms = {
   optionSettings: atom<TOptionSettings>({ key: 'optionSettings', default: {} }),
   showPluginStoreDialog: atom<boolean>({ key: 'showPluginStoreDialog', default: false }),
   showAgentSettings: atom<boolean>({ key: 'showAgentSettings', default: false }),
+  showParametersDrawer: atom<boolean>({ key: 'showParametersDrawer', default: false }),
   currentSettingsView: atom<SettingsViews>({
     key: 'currentSettingsView',
     default: SettingsViews.default,

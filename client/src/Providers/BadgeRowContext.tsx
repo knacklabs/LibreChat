@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { useSetRecoilState } from 'recoil';
-import { Tools, Constants, LocalStorageKeys, AgentCapabilities } from 'librechat-data-provider';
+import { Tools, Constants, LocalStorageKeys, AgentCapabilities, ArtifactModes } from 'librechat-data-provider';
 import type { TAgentsEndpoint } from 'librechat-data-provider';
 import {
   useMCPServerManager,
@@ -11,6 +11,7 @@ import {
 } from '~/hooks';
 import { getTimestampedValue, setTimestamp } from '~/utils/timestamps';
 import { ephemeralAgentByConvoId } from '~/store';
+import { useGetStartupConfig } from '~/data-provider';
 
 interface BadgeRowContextType {
   conversationId?: string | null;
@@ -48,7 +49,13 @@ export default function BadgeRowProvider({
   const lastKeyRef = useRef<string>('');
   const hasInitializedRef = useRef(false);
   const { agentsConfig } = useGetAgentsConfig();
+  const { data: startupConfig } = useGetStartupConfig();
   const key = conversationId ?? Constants.NEW_CONVO;
+
+  // Check if artifacts should be enabled by default from config
+  const artifactsConfig = (startupConfig?.interface as any)?.artifacts;
+  const artifactsDefaultEnabled = artifactsConfig?.defaultEnabled ?? false;
+  const artifactsMode = artifactsConfig?.mode; // 'default', 'shadcnui', or 'custom'
 
   const setEphemeralAgent = useSetRecoilState(ephemeralAgentByConvoId(key));
 
@@ -109,12 +116,27 @@ export default function BadgeRowProvider({
       /**
        * Always set values for all tools (use defaults if not in `localStorage`)
        * If `ephemeralAgent` is `null`, create a new object with just our tool values
+       * If config has artifacts.mode or artifacts.defaultEnabled, use that value
        */
+      let artifactsValue = initialValues[AgentCapabilities.artifacts] ?? ArtifactModes.DEFAULT;
+      
+      // If config specifies a mode, use it (takes precedence)
+      if (artifactsMode) {
+        artifactsValue = artifactsMode === 'shadcnui' 
+          ? ArtifactModes.SHADCNUI 
+          : artifactsMode === 'custom' 
+          ? ArtifactModes.CUSTOM 
+          : ArtifactModes.DEFAULT;
+      } else if (artifactsDefaultEnabled) {
+        // Backward compatibility: if defaultEnabled is true, use DEFAULT mode
+        artifactsValue = ArtifactModes.DEFAULT;
+      }
+      
       const finalValues = {
         [Tools.execute_code]: initialValues[Tools.execute_code] ?? false,
         [Tools.web_search]: initialValues[Tools.web_search] ?? false,
         [Tools.file_search]: initialValues[Tools.file_search] ?? false,
-        [AgentCapabilities.artifacts]: initialValues[AgentCapabilities.artifacts] ?? false,
+        [AgentCapabilities.artifacts]: artifactsValue,
       };
 
       setEphemeralAgent((prev) => ({
@@ -138,7 +160,7 @@ export default function BadgeRowProvider({
         }
       });
     }
-  }, [key, isSubmitting, setEphemeralAgent]);
+  }, [key, isSubmitting, setEphemeralAgent, artifactsDefaultEnabled, artifactsMode]);
 
   /** CodeInterpreter hooks */
   const codeApiKeyForm = useCodeApiKeyForm({});

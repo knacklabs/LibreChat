@@ -367,7 +367,7 @@ function BadgeRow({
             <WebSearch />
             <CodeInterpreter />
             <FileSearch />
-            <Artifacts />
+            {/* <Artifacts /> */}
             <MCPSelect />
           </>
         )}

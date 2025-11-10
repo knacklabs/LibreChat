@@ -652,7 +652,7 @@ const google: Record<string, SettingDefinition> = {
 };
 
 const googleConfig: SettingsConfiguration = [
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
   librechat.maxContextTokens,
   google.maxOutputTokens,
@@ -669,7 +669,7 @@ const googleConfig: SettingsConfiguration = [
 
 const googleCol1: SettingsConfiguration = [
   baseDefinitions.model as SettingDefinition,
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
 ];
 
@@ -688,7 +688,7 @@ const googleCol2: SettingsConfiguration = [
 ];
 
 const openAI: SettingsConfiguration = [
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
   librechat.maxContextTokens,
   openAIParams.max_tokens,
@@ -710,7 +710,7 @@ const openAI: SettingsConfiguration = [
 
 const openAICol1: SettingsConfiguration = [
   baseDefinitions.model as SettingDefinition,
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
 ];
 
@@ -734,7 +734,7 @@ const openAICol2: SettingsConfiguration = [
 ];
 
 const anthropicConfig: SettingsConfiguration = [
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
   librechat.maxContextTokens,
   anthropic.maxOutputTokens,
@@ -752,7 +752,7 @@ const anthropicConfig: SettingsConfiguration = [
 
 const anthropicCol1: SettingsConfiguration = [
   baseDefinitions.model as SettingDefinition,
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
 ];
 
@@ -772,7 +772,7 @@ const anthropicCol2: SettingsConfiguration = [
 ];
 
 const bedrockAnthropic: SettingsConfiguration = [
-  librechat.modelLabel,
+  // librechat.modelLabel,
   bedrock.system,
   librechat.maxContextTokens,
   bedrock.maxTokens,
@@ -788,7 +788,7 @@ const bedrockAnthropic: SettingsConfiguration = [
 ];
 
 const bedrockMistral: SettingsConfiguration = [
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
   librechat.maxContextTokens,
   bedrock.maxTokens,
@@ -800,7 +800,7 @@ const bedrockMistral: SettingsConfiguration = [
 ];
 
 const bedrockCohere: SettingsConfiguration = [
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
   librechat.maxContextTokens,
   bedrock.maxTokens,
@@ -812,7 +812,7 @@ const bedrockCohere: SettingsConfiguration = [
 ];
 
 const bedrockGeneral: SettingsConfiguration = [
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
   librechat.maxContextTokens,
   meta.temperature,
@@ -824,7 +824,7 @@ const bedrockGeneral: SettingsConfiguration = [
 
 const bedrockAnthropicCol1: SettingsConfiguration = [
   baseDefinitions.model as SettingDefinition,
-  librechat.modelLabel,
+  // librechat.modelLabel,
   bedrock.system,
   baseDefinitions.stop,
 ];
@@ -844,7 +844,7 @@ const bedrockAnthropicCol2: SettingsConfiguration = [
 
 const bedrockMistralCol1: SettingsConfiguration = [
   baseDefinitions.model as SettingDefinition,
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
 ];
 
@@ -860,7 +860,7 @@ const bedrockMistralCol2: SettingsConfiguration = [
 
 const bedrockCohereCol1: SettingsConfiguration = [
   baseDefinitions.model as SettingDefinition,
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
 ];
 
@@ -876,7 +876,7 @@ const bedrockCohereCol2: SettingsConfiguration = [
 
 const bedrockGeneralCol1: SettingsConfiguration = [
   baseDefinitions.model as SettingDefinition,
-  librechat.modelLabel,
+  // librechat.modelLabel,
   librechat.promptPrefix,
 ];
 

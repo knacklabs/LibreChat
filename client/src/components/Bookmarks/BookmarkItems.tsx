@@ -1,13 +1,15 @@
 import type { FC } from 'react';
+import type { TConversationTag } from 'librechat-data-provider';
 import { useBookmarkContext } from '~/Providers/BookmarkContext';
 import BookmarkItem from './BookmarkItem';
 interface BookmarkItemsProps {
   tags: string[];
   handleSubmit: (tag?: string) => void;
   header: React.ReactNode;
+  renderActions?: (bookmark: TConversationTag) => React.ReactNode;
 }
 
-const BookmarkItems: FC<BookmarkItemsProps> = ({ tags, handleSubmit, header }) => {
+const BookmarkItems: FC<BookmarkItemsProps> = ({ tags, handleSubmit, header, renderActions }) => {
   const { bookmarks } = useBookmarkContext();
 
   return (
@@ -20,6 +22,7 @@ const BookmarkItems: FC<BookmarkItemsProps> = ({ tags, handleSubmit, header }) =
           tag={bookmark.tag}
           selected={tags.includes(bookmark.tag)}
           handleSubmit={handleSubmit}
+          actions={renderActions?.(bookmark)}
         />
       ))}
     </>
