@@ -26,7 +26,13 @@ export const columns: ColumnDef<TFile | undefined>[] = [
     meta: {
       size: '150px',
     },
-    cell: ({ row }) => <PanelFileCell row={row} />,
+    cell: ({ row, table }) => {
+      const meta = table.options.meta as { showSelection?: boolean; attachedFileIds?: Set<string> } | undefined;
+      const isSelected = meta?.showSelection && row.original?.file_id 
+        ? meta.attachedFileIds?.has(row.original.file_id)
+        : undefined;
+      return <PanelFileCell row={row} isSelected={isSelected} />;
+    },
   },
   {
     accessorKey: 'updatedAt',

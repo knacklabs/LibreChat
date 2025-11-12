@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Blocks, MCPIcon, AttachmentIcon } from '@librechat/client';
-import { Database, Bookmark, Settings2, ArrowRightToLine, MessageSquareQuote } from 'lucide-react';
+import { Database, Settings2, ArrowRightToLine, MessageSquareQuote } from 'lucide-react';
 import {
   Permissions,
   EModelEndpoint,
@@ -12,7 +12,6 @@ import {
 import type { TInterfaceConfig, TEndpointsConfig } from 'librechat-data-provider';
 import type { NavLink } from '~/common';
 import AgentPanelSwitch from '~/components/SidePanel/Agents/AgentPanelSwitch';
-import BookmarkPanel from '~/components/SidePanel/Bookmarks/BookmarkPanel';
 import MemoryViewer from '~/components/SidePanel/Memories/MemoryViewer';
 import PanelSwitch from '~/components/SidePanel/Builder/PanelSwitch';
 import PromptsAccordion from '~/components/Prompts/PromptsAccordion';
@@ -39,10 +38,6 @@ export default function useSideNavLinks({
 }) {
   const hasAccessToPrompts = useHasAccess({
     permissionType: PermissionTypes.PROMPTS,
-    permission: Permissions.USE,
-  });
-  const hasAccessToBookmarks = useHasAccess({
-    permissionType: PermissionTypes.BOOKMARKS,
     permission: Permissions.USE,
   });
   const hasAccessToMemories = useHasAccess({
@@ -119,38 +114,40 @@ export default function useSideNavLinks({
       });
     }
 
-    if (
-      interfaceConfig.parameters === true &&
-      isParamEndpoint(endpoint ?? '', endpointType ?? '') === true &&
-      !isAgentsEndpoint(endpoint) &&
-      keyProvided
-    ) {
-      links.push({
-        title: 'com_sidepanel_parameters',
-        label: '',
-        icon: Settings2,
-        id: 'parameters',
-        Component: Parameters,
-      });
-    }
+    // Parameters panel moved to chat header (beside share button)
+    // if (
+    //   interfaceConfig.parameters === true &&
+    //   isParamEndpoint(endpoint ?? '', endpointType ?? '') === true &&
+    //   !isAgentsEndpoint(endpoint) &&
+    //   keyProvided
+    // ) {
+    //   links.push({
+    //     title: 'com_sidepanel_parameters',
+    //     label: '',
+    //     icon: Settings2,
+    //     id: 'parameters',
+    //     Component: Parameters,
+    //   });
+    // }
 
-    links.push({
-      title: 'com_sidepanel_attach_files',
-      label: '',
-      icon: AttachmentIcon,
-      id: 'files',
-      Component: FilesPanel,
-    });
+    // Files panel removed - now accessible from chat attach menu
+    // links.push({
+    //   title: 'com_sidepanel_attach_files',
+    //   label: '',
+    //   icon: AttachmentIcon,
+    //   id: 'files',
+    //   Component: FilesPanel,
+    // });
 
-    if (hasAccessToBookmarks) {
-      links.push({
-        title: 'com_sidepanel_conversation_tags',
-        label: '',
-        icon: Bookmark,
-        id: 'bookmarks',
-        Component: BookmarkPanel,
-      });
-    }
+    // if (hasAccessToBookmarks) {
+    //   links.push({
+    //     title: 'com_sidepanel_conversation_tags',
+    //     label: '',
+    //     icon: Bookmark,
+    //     id: 'bookmarks',
+    //     Component: BookmarkPanel,
+    //   });
+    // }
 
     if (
       startupConfig?.mcpServers &&
@@ -189,7 +186,6 @@ export default function useSideNavLinks({
     hasAccessToPrompts,
     hasAccessToMemories,
     hasAccessToReadMemories,
-    hasAccessToBookmarks,
     hasAccessToCreateAgents,
     hidePanel,
     startupConfig,

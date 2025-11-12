@@ -5,7 +5,7 @@ const { getUserKey, checkUserKeyExpiry } = require('~/server/services/UserServic
 const { GoogleClient } = require('~/app');
 
 const initializeClient = async ({ req, res, endpointOption, overrideModel, optionsOnly }) => {
-  const { GOOGLE_KEY, GOOGLE_REVERSE_PROXY, GOOGLE_AUTH_HEADER, PROXY } = process.env;
+  const { GOOGLE_KEY, GOOGLE_REVERSE_PROXY, GOOGLE_AUTH_HEADER, PROXY,LITELLM_URL } = process.env;
   const isUserProvided = GOOGLE_KEY === 'user_provided';
   const { key: expiresAt } = req.body;
 
@@ -36,12 +36,23 @@ const initializeClient = async ({ req, res, endpointOption, overrideModel, optio
       serviceKey = {};
     }
   }
+  const shouldUseOpenIdAuth = GOOGLE_KEY === 'openid';
+  // const credentials = isUserProvided
+  //   ? userKey
+  //   : {
+  //       [AuthKeys.GOOGLE_SERVICE_KEY]: serviceKey,
+  //       [AuthKeys.GOOGLE_API_KEY]: req.headers.authorization,
+  //     };
+  let googleApiKey = GOOGLE_KEY;
+  if (shouldUseOpenIdAuth) {
+    googleApiKey = req.headers.authorization;
+  }
 
   const credentials = isUserProvided
     ? userKey
     : {
         [AuthKeys.GOOGLE_SERVICE_KEY]: serviceKey,
-        [AuthKeys.GOOGLE_API_KEY]: GOOGLE_KEY,
+        [AuthKeys.GOOGLE_API_KEY]: googleApiKey,  // Use the conditional key
       };
 
   let clientOptions = {};
@@ -61,11 +72,14 @@ const initializeClient = async ({ req, res, endpointOption, overrideModel, optio
     clientOptions.streamRate = allConfig.streamRate;
   }
 
+  // Check if GOOGLE_KEY is "openid" to use LibreChat authorization header
+  
+
   clientOptions = {
     req,
     res,
     reverseProxyUrl: GOOGLE_REVERSE_PROXY ?? null,
-    authHeader: isEnabled(GOOGLE_AUTH_HEADER) ?? null,
+    authHeader: (isEnabled(GOOGLE_AUTH_HEADER) ?? null),
     proxy: PROXY ?? null,
     ...clientOptions,
     ...endpointOption,

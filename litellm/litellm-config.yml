@@ -1,0 +1,68 @@
+# model_list:
+#   - model_name: gemini-2.5-flash
+#     litellm_params:
+#       model: gemini/gemini-2.5-flash
+
+#   - model_name: gpt-4o-mini
+#     litellm_params:
+#       model: gpt-4o-mini
+
+#   - model_name: gpt-4o
+#     litellm_params:
+#       model: gpt-4o
+
+general_settings:
+  public_routes: ["LiteLLMRoutes.public_routes", "/guardrails/list"]
+  master_key: "sk-1234"
+  store_model_in_db: true
+  store_prompts_in_spend_logs: true
+
+
+
+litellm_settings:
+  set_verbose: true
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
+  # Track costs
+  track_cost_per_model: false
+  track_cost_per_user: false
+  # Log everything for debugging
+  log_input_output: true
+  log_async: true
+  # Enable proper demasking
+  enable_guardrail_demasking: true
+  preserve_original_mapping: true
+  disable_guardrail_logging: false
+
+
+# guardrails:
+#   - guardrail_name: "presidio-pii"
+#     litellm_params:
+#       guardrail: presidio
+#       presidio_analyzer_api_base: "http://presidio-analyzer:3000"  # analyzer
+#       presidio_anonymizer_api_base: "http://presidio-anonymizer:3000"  # anonymizer
+#       #default_on: true
+#       mode: 
+#         - "pre_call"
+#         - "post_call"
+#       presidio_language: "en"
+#       output_parse_pii: true
+#       # Enable proper demasking with original mapping
+#       presidio_anonymize_only: false
+#       presidio_keep_original: true
+#       presidio_restore_original: true
+#       pii_entities_config:
+#         PERSON: "MASK"
+#         EMAIL_ADDRESS: "MASK"  
+
+guardrails:
+  - guardrail_name: protecto
+    litellm_params:
+      guardrail: protecto
+      mode: 
+        - pre_call
+        - post_call
+      # default_on: true
+      protecto_api_base: os.environ/PROTECTO_API_BASE
+      protecto_auth_token: os.environ/PROTECTO_AUTH_TOKEN
+      output_parse_pii: true

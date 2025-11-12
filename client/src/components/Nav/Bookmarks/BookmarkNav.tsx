@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { FC } from 'react';
+import type { TConversationTag } from 'librechat-data-provider';
 import { TooltipAnchor } from '@librechat/client';
 import { Menu, MenuButton, MenuItems } from '@headlessui/react';
 import { BookmarkFilledIcon, BookmarkIcon } from '@radix-ui/react-icons';
 import { BookmarkContext } from '~/Providers/BookmarkContext';
 import { useGetConversationTags } from '~/data-provider';
+import { EditBookmarkDialog, DeleteBookmarkDialog } from './BookmarkDialogs';
 import BookmarkNavItems from './BookmarkNavItems';
 import { useLocalize } from '~/hooks';
 import { cn } from '~/utils';
@@ -18,12 +20,15 @@ type BookmarkNavProps = {
 const BookmarkNav: FC<BookmarkNavProps> = ({ tags, setTags, isSmallScreen }: BookmarkNavProps) => {
   const localize = useLocalize();
   const { data } = useGetConversationTags();
+  const [editingBookmark, setEditingBookmark] = useState<TConversationTag | null>(null);
+  const [deletingBookmark, setDeletingBookmark] = useState<string | null>(null);
   const label = useMemo(
     () => (tags.length > 0 ? tags.join(', ') : localize('com_ui_bookmarks')),
     [tags, localize],
   );
 
   return (
+    <>
     <Menu as="div" className="group relative">
       {({ open }) => (
         <>
@@ -60,6 +65,8 @@ const BookmarkNav: FC<BookmarkNavProps> = ({ tags, setTags, isSmallScreen }: Boo
                   tags={tags}
                   // When a user selects a tag, this `setTags` function is called to refetch the list of conversations for the selected tag
                   setTags={setTags}
+                  onEditBookmark={setEditingBookmark}
+                  onDeleteBookmark={setDeletingBookmark}
                 />
               </BookmarkContext.Provider>
             )}
@@ -67,6 +74,20 @@ const BookmarkNav: FC<BookmarkNavProps> = ({ tags, setTags, isSmallScreen }: Boo
         </>
       )}
     </Menu>
+    {/* Render dialogs outside Menu - they auto-open and call onClose when done */}
+    {editingBookmark && (
+      <EditBookmarkDialog
+        bookmark={editingBookmark}
+        onClose={() => setEditingBookmark(null)}
+      />
+    )}
+    {deletingBookmark && (
+      <DeleteBookmarkDialog
+        bookmark={deletingBookmark}
+        onClose={() => setDeletingBookmark(null)}
+      />
+    )}
+    </>
   );
 };
 

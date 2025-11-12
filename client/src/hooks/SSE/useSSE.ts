@@ -46,6 +46,7 @@ export default function useSSE(
 ) {
   const genTitle = useGenTitleMutation();
   const setActiveRunId = useSetRecoilState(store.activeRunFamily(runIndex));
+  const { logoutInProgress } = useAuthContext();
 
   const { token, isAuthenticated } = useAuthContext();
   const [completed, setCompleted] = useState(new Set());
@@ -200,6 +201,13 @@ export default function useSSE(
     sse.addEventListener('error', async (e: MessageEvent) => {
       /* @ts-ignore */
       if (e.responseCode === 401) {
+        /* Don't refresh token if logout is in progress */
+        console.log('🔍 SSE: 401 error received, logoutInProgress:', logoutInProgress);
+        if (logoutInProgress) {
+          console.log('🚫 SSE: Logout in progress, skipping token refresh');
+          return;
+        }
+        
         /* token expired, refresh and retry */
         try {
           const refreshResponse = await request.refreshToken();

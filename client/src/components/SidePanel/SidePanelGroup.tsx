@@ -1,6 +1,8 @@
+// works for both side panel and parameters panel
+
 import { useState, useRef, useCallback, useEffect, useMemo, memo } from 'react';
 import throttle from 'lodash/throttle';
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { getConfigDefaults } from 'librechat-data-provider';
 import {
   ResizableHandleAlt,
@@ -12,6 +14,7 @@ import type { ImperativePanelHandle } from 'react-resizable-panels';
 import { useGetStartupConfig } from '~/data-provider';
 import { normalizeLayout } from '~/utils';
 import SidePanel from './SidePanel';
+import ParametersPanelContent from '~/components/Chat/ParametersPanelContent';
 import store from '~/store';
 
 interface SidePanelProps {
@@ -49,19 +52,39 @@ const SidePanelGroup = memo(
 
     const isSmallScreen = useMediaQuery('(max-width: 767px)');
     const hideSidePanel = useRecoilValue(store.hideSidePanel);
+    const showParameters = useRecoilValue(store.showParametersDrawer);
+    const setShowParameters = useSetRecoilState(store.showParametersDrawer);
 
     const calculateLayout = useCallback(() => {
       if (artifacts == null) {
-        const navSize = defaultLayout.length === 2 ? defaultLayout[1] : defaultLayout[2];
-        return [100 - navSize, navSize];
+        if (showParameters) {
+          // Parameters only: [main, parameters]
+          const paramsSize = defaultLayout.length === 2 ? defaultLayout[1] : defaultLayout[2];
+          return [100 - paramsSize, paramsSize];
+        } else {
+          // Side panel only: [main, nav]
+          const navSize = defaultLayout.length === 2 ? defaultLayout[1] : defaultLayout[2];
+          return [100 - navSize, navSize];
+        }
       } else {
-        const navSize = 0;
-        const remainingSpace = 100 - navSize;
-        const newMainSize = Math.floor(remainingSpace / 2);
-        const artifactsSize = remainingSpace - newMainSize;
-        return [newMainSize, artifactsSize, navSize];
+        // Artifacts are open
+        if (showParameters) {
+          // Artifacts + Parameters: [main, artifacts, parameters]
+          const remainingSpace = 100;
+          const newMainSize = Math.floor(remainingSpace / 3);
+          const artifactsSize = Math.floor(remainingSpace / 3);
+          const paramsSize = remainingSpace - newMainSize - artifactsSize;
+          return [newMainSize, artifactsSize, paramsSize];
+        } else {
+          // Artifacts only: [main, artifacts, nav=0]
+          const navSize = 0;
+          const remainingSpace = 100 - navSize;
+          const newMainSize = Math.floor(remainingSpace / 2);
+          const artifactsSize = remainingSpace - newMainSize;
+          return [newMainSize, artifactsSize, navSize];
+        }
       }
-    }, [artifacts, defaultLayout]);
+    }, [artifacts, defaultLayout, showParameters]);
 
     const currentLayout = useMemo(() => normalizeLayout(calculateLayout()), [calculateLayout]);
 
@@ -89,6 +112,17 @@ const SidePanelGroup = memo(
         setMinSize(defaultMinSize);
       }
     }, [isSmallScreen, defaultCollapsed, navCollapsedSize, fullPanelCollapse]);
+
+    // Close parameters panel when artifacts FIRST open (like side panel does)
+    // But allow reopening parameters while artifacts are open (they'll coexist)
+    const prevArtifactsRef = useRef(artifacts);
+    useEffect(() => {
+      // Only close if artifacts just opened (changed from null to non-null) AND parameters is open
+      if (artifacts != null && prevArtifactsRef.current == null && showParameters) {
+        setShowParameters(false);
+      }
+      prevArtifactsRef.current = artifacts;
+    }, [artifacts, showParameters, setShowParameters]);
 
     const minSizeMain = useMemo(() => (artifacts != null ? 15 : 30), [artifacts]);
 
@@ -132,7 +166,20 @@ const SidePanelGroup = memo(
               </ResizablePanel>
             </>
           )}
-          {!hideSidePanel && interfaceConfig.sidePanel === true && (
+          {showParameters && (
+            <>
+              <ResizableHandleAlt withHandle className="ml-3 bg-border-medium text-text-primary" />
+              <ResizablePanel
+                defaultSize={artifacts != null ? currentLayout[2] : currentLayout[1]}
+                minSize={minSizeMain}
+                order={artifacts != null ? 3 : 2}
+                id="parameters-panel"
+              >
+                <ParametersPanelContent />
+              </ResizablePanel>
+            </>
+          )}
+          {!hideSidePanel && !showParameters && interfaceConfig.sidePanel === true && (
             <SidePanel
               panelRef={panelRef}
               minSize={minSize}

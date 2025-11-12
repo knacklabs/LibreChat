@@ -11,7 +11,7 @@ import {
 import { debounce } from 'lodash';
 import { useRecoilState } from 'recoil';
 import { useNavigate } from 'react-router-dom';
-import { setTokenHeader, SystemRoles } from 'librechat-data-provider';
+import { QueryKeys, setTokenHeader, SystemRoles } from 'librechat-data-provider';
 import type * as t from 'librechat-data-provider';
 import {
   useGetRole,
@@ -23,6 +23,7 @@ import {
 import { TAuthConfig, TUserContext, TAuthContext, TResError } from '~/common';
 import useTimeout from './useTimeout';
 import store from '~/store';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext<TAuthContext | undefined>(undefined);
 
@@ -32,12 +33,15 @@ const AuthContextProvider = ({
 }: {
   authConfig?: TAuthConfig;
   children: ReactNode;
-}) => {
+}) => {  
   const [user, setUser] = useRecoilState(store.user);
   const [token, setToken] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  // const [logoutInProgress, setLogoutInProgress] = useState<boolean>(false);
   const logoutRedirectRef = useRef<string | undefined>(undefined);
+  const logoutInProgressRef = useRef<boolean>(false);
+  const queryClient = useQueryClient();
 
   const { data: userRole = null } = useGetRole(SystemRoles.USER, {
     enabled: !!(isAuthenticated && (user?.role ?? '')),
@@ -95,7 +99,15 @@ const AuthContextProvider = ({
     },
   });
   const logoutUser = useLogoutUserMutation({
+    onMutate: () => {
+      
+      logoutInProgressRef.current = true;
+      (window as any).logoutInProgress = true;
+      queryClient.cancelQueries();
+    },
     onSuccess: (data) => {
+      
+      // Keep logout flag true until user actually logs in again
       setUserContext({
         token: undefined,
         isAuthenticated: false,
@@ -104,7 +116,9 @@ const AuthContextProvider = ({
       });
     },
     onError: (error) => {
+      
       doSetError((error as Error).message);
+      // Keep logout flag true until user actually logs in again
       setUserContext({
         token: undefined,
         isAuthenticated: false,
@@ -117,25 +131,60 @@ const AuthContextProvider = ({
 
   const logout = useCallback(
     (redirect?: string) => {
+      
       if (redirect) {
         logoutRedirectRef.current = redirect;
       }
+      
+      // Set logout flag IMMEDIATELY to prevent any refresh calls during OAuth logout
+      logoutInProgressRef.current = true;
+      (window as any).logoutInProgress = true;
+      
+      
+      
+      // Cancel all queries immediately to stop SSE and other API calls
+      queryClient.cancelQueries();
+      queryClient.clear();
+      
+      // The onMutate callback will handle additional cleanup
       logoutUser.mutate(undefined);
+
     },
-    [logoutUser],
+    [logoutUser, queryClient],
   );
 
   const userQuery = useGetUserQuery({ enabled: !!(token ?? '') });
 
   const login = (data: t.TLoginUser) => {
+    // Reset logout flag when user actually logs in (not just lands on login page)
+    logoutInProgressRef.current = false;
+    
+    // Reset global flag for HTTP client
+    (window as any).logoutInProgress = false;
+    
     loginUser.mutate(data);
   };
 
   const silentRefresh = useCallback(() => {
+    
     if (authConfig?.test === true) {
       console.log('Test mode. Skipping silent refresh.');
       return;
     }
+    
+    // Check BOTH ref and window flag
+    if (logoutInProgressRef.current) {
+      console.log('⛔ Logout in progress. Skipping silent refresh.');
+      return;
+    }
+    
+    if (window.location.pathname.startsWith('/login')) {
+      console.log('⛔ On login page. Skipping silent refresh.');
+      return;
+    }
+    
+    console.log('✅ Proceeding with token refresh');
+  
     refreshToken.mutate(undefined, {
       onSuccess: (data: t.TRefreshTokenResponse | undefined) => {
         const { user, token = '' } = data ?? {};
@@ -160,6 +209,8 @@ const AuthContextProvider = ({
   }, []);
 
   useEffect(() => {
+    
+    
     if (userQuery.data) {
       setUser(userQuery.data);
     } else if (userQuery.isError) {
@@ -169,21 +220,39 @@ const AuthContextProvider = ({
     if (error != null && error && isAuthenticated) {
       doSetError(undefined);
     }
-    if (token == null || !token || !isAuthenticated) {
-      silentRefresh();
-    }
-  }, [
-    token,
-    isAuthenticated,
-    userQuery.data,
-    userQuery.isError,
-    userQuery.error,
-    error,
-    setUser,
-    navigate,
-    silentRefresh,
-    setUserContext,
-  ]);
+    
+    // Don't call silentRefresh if we're on the login page (check both /login and redirect_uri)
+    const isOnLoginPage = window.location.pathname.startsWith('/login');
+  
+  // CRITICAL: Check ref AND window flag before state
+  if (logoutInProgressRef.current) {
+    console.log('⛔ Logout in progress (checked ref), skipping silentRefresh');
+    return;
+  }
+  
+  // Don't call silentRefresh if we're on login page
+  if (isOnLoginPage) {
+    console.log('⛔ On login page, skipping silentRefresh');
+    return;
+  }
+  
+  if (!logoutInProgressRef.current && (token == null || !token || !isAuthenticated)) {
+    console.log('🚨 AuthContext: Calling silentRefresh()');
+    silentRefresh();
+  }
+}, [
+  token,
+  isAuthenticated,
+  // Remove logoutInProgress from dependencies if possible, or keep it but check ref first
+  userQuery.data,
+  userQuery.isError,
+  userQuery.error,
+  error,
+  setUser,
+  navigate,
+  silentRefresh,
+]);
+
 
   useEffect(() => {
     const handleTokenUpdate = (event) => {
@@ -217,9 +286,10 @@ const AuthContextProvider = ({
         [SystemRoles.ADMIN]: adminRole,
       },
       isAuthenticated,
+      logoutInProgress: logoutInProgressRef.current,
     }),
 
-    [user, error, isAuthenticated, token, userRole, adminRole],
+    [user, error, isAuthenticated, token, userRole, adminRole, logoutInProgressRef.current],
   );
 
   return <AuthContext.Provider value={memoedValue}>{children}</AuthContext.Provider>;

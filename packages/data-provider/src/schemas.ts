@@ -757,6 +757,8 @@ export const tConversationSchema = z.object({
   agentOptions: tAgentOptionsSchema.nullable().optional(),
   /** @deprecated Prefer `modelLabel` over `chatGptLabel` */
   chatGptLabel: z.string().nullable().optional(),
+  /* guardrails */
+  guardrails: z.array(z.string()).optional(),
 });
 
 export const tPresetSchema = tConversationSchema
@@ -782,6 +784,7 @@ export const tConvoUpdateSchema = tConversationSchema.merge(
     endpoint: extendedModelEndpointSchema.nullable(),
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
+    guardrails: z.array(z.string()).optional(),
   }),
 );
 
@@ -923,6 +926,7 @@ export const googleBaseSchema = tConversationSchema.pick({
   thinking: true,
   thinkingBudget: true,
   web_search: true,
+  disableStreaming: true,
   fileTokenLimit: true,
   iconURL: true,
   greeting: true,
@@ -1220,6 +1224,7 @@ export const anthropicBaseSchema = tConversationSchema.pick({
   spec: true,
   maxContextTokens: true,
   web_search: true,
+  disableStreaming: true,
   fileTokenLimit: true,
   stop: true,
   stream: true,

@@ -17,7 +17,7 @@ async function loadDefaultModels(req) {
   try {
     const [openAI, anthropic, azureOpenAI, assistants, azureAssistants, google, bedrock] =
       await Promise.all([
-        getOpenAIModels({ user: req.user.id }).catch((error) => {
+        getOpenAIModels({ user: req.user.id, req }).catch((error) => {
           logger.error('Error fetching OpenAI models:', error);
           return [];
         }),
@@ -25,15 +25,15 @@ async function loadDefaultModels(req) {
           logger.error('Error fetching Anthropic models:', error);
           return [];
         }),
-        getOpenAIModels({ user: req.user.id, azure: true }).catch((error) => {
+        getOpenAIModels({ user: req.user.id, azure: true, req }).catch((error) => {
           logger.error('Error fetching Azure OpenAI models:', error);
           return [];
         }),
-        getOpenAIModels({ assistants: true }).catch((error) => {
+        getOpenAIModels({ assistants: true, req }).catch((error) => {
           logger.error('Error fetching OpenAI Assistants API models:', error);
           return [];
         }),
-        getOpenAIModels({ azureAssistants: true }).catch((error) => {
+        getOpenAIModels({ azureAssistants: true, req }).catch((error) => {
           logger.error('Error fetching Azure OpenAI Assistants API models:', error);
           return [];
         }),

@@ -60,6 +60,8 @@ export const knownOpenAIParams = new Set([
   'streaming',
   'streamUsage',
   'disableStreaming',
+  // Guardrails support
+  'guardrails',
 ]);
 
 function hasReasoningParams({

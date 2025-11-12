@@ -1,26 +1,41 @@
 import { useMemo } from 'react';
 import { useMediaQuery } from '@librechat/client';
 import { useOutletContext } from 'react-router-dom';
-import { getConfigDefaults, PermissionTypes, Permissions } from 'librechat-data-provider';
+import {
+  getConfigDefaults,
+  PermissionTypes,
+  Permissions,
+  isParamEndpoint,
+  isAgentsEndpoint,
+} from 'librechat-data-provider';
 import type { ContextType } from '~/common';
 import ModelSelector from './Menus/Endpoints/ModelSelector';
-import { PresetsMenu, HeaderNewChat, OpenSidebar } from './Menus';
-import { useGetStartupConfig } from '~/data-provider';
+import { PresetsMenu, ParametersMenu, HeaderNewChat, OpenSidebar } from './Menus';
+import { useGetStartupConfig, useGetEndpointsQuery } from '~/data-provider';
 import ExportAndShareMenu from './ExportAndShareMenu';
 import BookmarkMenu from './Menus/BookmarkMenu';
 import { TemporaryChat } from './TemporaryChat';
 import AddMultiConvo from './AddMultiConvo';
 import { useHasAccess } from '~/hooks';
+import { useChatContext } from '~/Providers';
+import { getEndpointField } from '~/utils';
 
 const defaultInterface = getConfigDefaults().interface;
 
 export default function Header() {
   const { data: startupConfig } = useGetStartupConfig();
+  const { data: endpointsConfig = {} } = useGetEndpointsQuery();
+  const { conversation } = useChatContext();
   const { navVisible, setNavVisible } = useOutletContext<ContextType>();
 
   const interfaceConfig = useMemo(
     () => startupConfig?.interface ?? defaultInterface,
     [startupConfig],
+  );
+
+  const endpointType = useMemo(
+    () => getEndpointField(endpointsConfig, conversation?.endpoint, 'type'),
+    [conversation?.endpoint, endpointsConfig],
   );
 
   const hasAccessToBookmarks = useHasAccess({
@@ -32,6 +47,16 @@ export default function Header() {
     permissionType: PermissionTypes.MULTI_CONVO,
     permission: Permissions.USE,
   });
+
+  const showParameters = useMemo(() => {
+    const keyProvided = conversation?.endpoint != null;
+    return (
+      interfaceConfig.parameters === true &&
+      isParamEndpoint(conversation?.endpoint ?? '', endpointType ?? '') === true &&
+      !isAgentsEndpoint(conversation?.endpoint) &&
+      keyProvided
+    );
+  }, [interfaceConfig.parameters, conversation?.endpoint, endpointType]);
 
   const isSmallScreen = useMediaQuery('(max-width: 768px)');
 
@@ -58,6 +83,7 @@ export default function Header() {
           >
             <ModelSelector startupConfig={startupConfig} />
             {interfaceConfig.presets === true && interfaceConfig.modelSelect && <PresetsMenu />}
+            {showParameters && <ParametersMenu />}
             {hasAccessToBookmarks === true && <BookmarkMenu />}
             {hasAccessToMultiConvo === true && <AddMultiConvo />}
             {isSmallScreen && (
@@ -65,7 +91,7 @@ export default function Header() {
                 <ExportAndShareMenu
                   isSharedButtonEnabled={startupConfig?.sharedLinksEnabled ?? false}
                 />
-                <TemporaryChat />
+                {interfaceConfig.temporaryChat === true && <TemporaryChat />}
               </>
             )}
           </div>
@@ -75,7 +101,7 @@ export default function Header() {
             <ExportAndShareMenu
               isSharedButtonEnabled={startupConfig?.sharedLinksEnabled ?? false}
             />
-            <TemporaryChat />
+            {interfaceConfig.temporaryChat === true && <TemporaryChat />}
           </div>
         )}
       </div>

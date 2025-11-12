@@ -19,6 +19,11 @@ export const useLogoutUserMutation = (
   return useMutation([MutationKeys.logoutUser], {
     mutationFn: () => dataService.logout(),
     ...(options || {}),
+    onMutate: () => {
+      // Set global flag for HTTP client immediately when mutation starts
+      (window as any).logoutInProgress = true;
+      queryClient.cancelQueries();
+    },
     onSuccess: (...args) => {
       setQueriesEnabled(false);
       resetDefaultPreset();
@@ -40,6 +45,8 @@ export const useLoginUserMutation = (
     mutationFn: (payload: t.TLoginUser) => dataService.login(payload),
     ...(options || {}),
     onMutate: (vars) => {
+      // Reset global flag for HTTP client
+      (window as any).logoutInProgress = false;
       resetDefaultPreset();
       clearStates();
       queryClient.removeQueries();

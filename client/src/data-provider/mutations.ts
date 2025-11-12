@@ -224,6 +224,32 @@ export const useUpdateSharedLinkMutation = (
   );
 };
 
+export const useContinueSharedConversationMutation = (
+  options?: t.MutationOptions<t.TContinueShareResponse, { shareId: string }>,
+): UseMutationResult<t.TContinueShareResponse, unknown, { shareId: string }, unknown> => {
+  const queryClient = useQueryClient();
+
+  const { onSuccess, ..._options } = options || {};
+  return useMutation(
+    ({ shareId }) => {
+      if (!shareId) {
+        throw new Error('Share ID is required');
+      }
+
+      return dataService.continueSharedConversation(shareId);
+    },
+    {
+      onSuccess: (data: t.TContinueShareResponse, vars, context) => {
+        // Invalidate conversations list to show the new conversation
+        queryClient.invalidateQueries([QueryKeys.allConversations]);
+
+        onSuccess?.(data, vars, context);
+      },
+      ..._options,
+    },
+  );
+};
+
 export const useDeleteSharedLinkMutation = (
   options?: t.DeleteSharedLinkOptions,
 ): UseMutationResult<

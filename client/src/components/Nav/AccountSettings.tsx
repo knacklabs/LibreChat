@@ -1,7 +1,8 @@
 import { useState, memo } from 'react';
 import { useRecoilState } from 'recoil';
+import { useNavigate } from 'react-router-dom';
 import * as Select from '@ariakit/react/select';
-import { FileText, LogOut } from 'lucide-react';
+import { FileText, LogOut, TrendingUp } from 'lucide-react';
 import { LinkIcon, GearIcon, DropdownMenuSeparator, Avatar } from '@librechat/client';
 import { useGetStartupConfig, useGetUserBalance } from '~/data-provider';
 import FilesView from '~/components/Chat/Input/Files/FilesView';
@@ -12,6 +13,7 @@ import store from '~/store';
 
 function AccountSettings() {
   const localize = useLocalize();
+  const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthContext();
   const { data: startupConfig } = useGetStartupConfig();
   const balanceQuery = useGetUserBalance({
@@ -78,6 +80,14 @@ function AccountSettings() {
             {localize('com_nav_help_faq')}
           </Select.SelectItem>
         )}
+        <Select.SelectItem
+          value=""
+          onClick={() => navigate('/usage')}
+          className="select-item text-sm"
+        >
+          <TrendingUp className="icon-md" aria-hidden="true" />
+          Usage
+        </Select.SelectItem>
         <Select.SelectItem
           value=""
           onClick={() => setShowSettings(true)}

@@ -82,6 +82,7 @@ export const getSharedLinks = (
   }${cursor ? `&cursor=${cursor}` : ''}`;
 export const createSharedLink = (conversationId: string) => `${shareRoot}/${conversationId}`;
 export const updateSharedLink = (shareId: string) => `${shareRoot}/${shareId}`;
+export const continueSharedConversation = (shareId: string) => `${shareRoot}/${shareId}/continue`;
 
 const keysEndpoint = `${BASE_URL}/api/keys`;
 

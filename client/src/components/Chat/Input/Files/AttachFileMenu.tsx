@@ -7,6 +7,7 @@ import {
   FileType2Icon,
   FileImageIcon,
   TerminalSquareIcon,
+  FolderIcon,
 } from 'lucide-react';
 import {
   EToolResources,
@@ -31,6 +32,7 @@ import {
 } from '~/hooks';
 import useSharePointFileHandling from '~/hooks/Files/useSharePointFileHandling';
 import { SharePointPickerDialog } from '~/components/SharePoint';
+import { FileLibraryDialog } from './FileLibraryDialog';
 import { useGetStartupConfig } from '~/data-provider';
 import { ephemeralAgentByConvoId } from '~/store';
 import { MenuItemProps } from '~/common';
@@ -76,6 +78,7 @@ const AttachFileMenu = ({
   const sharePointEnabled = startupConfig?.sharePointFilePickerEnabled;
 
   const [isSharePointDialogOpen, setIsSharePointDialogOpen] = useState(false);
+  const [isFileLibraryDialogOpen, setIsFileLibraryDialogOpen] = useState(false);
 
   /** TODO: Ephemeral Agent Capabilities
    * Allow defining agent capabilities on a per-endpoint basis
@@ -186,6 +189,13 @@ const AttachFileMenu = ({
 
     const localItems = createMenuItems(handleUploadClick);
 
+    // Add "From Library" option
+    localItems.push({
+      label: localize('com_files_from_library'),
+      onClick: () => setIsFileLibraryDialogOpen(true),
+      icon: <FolderIcon className="icon-md" />,
+    });
+
     if (sharePointEnabled) {
       const sharePointItems = createMenuItems(() => {
         setIsSharePointDialogOpen(true);
@@ -272,6 +282,10 @@ const AttachFileMenu = ({
         isDownloading={isProcessing}
         downloadProgress={downloadProgress}
         maxSelectionCount={endpointFileConfig?.fileLimit}
+      />
+      <FileLibraryDialog
+        isOpen={isFileLibraryDialogOpen}
+        onOpenChange={setIsFileLibraryDialogOpen}
       />
     </>
   );

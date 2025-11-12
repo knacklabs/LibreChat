@@ -608,7 +608,9 @@ class GoogleClient extends BaseClient {
     if (this.project_id != null) {
       logger.debug('Creating VertexAI client');
       this.visionMode = undefined;
-      clientOptions.streaming = true;
+      if (clientOptions.streaming !== false) {
+        clientOptions.streaming = true;
+      }
       const client = new ChatVertexAI(clientOptions);
       client.temperature = clientOptions.temperature;
       client.topP = clientOptions.topP;

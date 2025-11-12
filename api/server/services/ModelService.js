@@ -137,6 +137,8 @@ const fetchOpenAIModels = async (opts, _models = []) => {
   const openaiBaseURL = 'https://api.openai.com/v1';
   let baseURL = openaiBaseURL;
   let reverseProxyUrl = process.env.OPENAI_REVERSE_PROXY;
+  // Check if API key is "openid" to use LibreChat authorization header
+  const shouldUseOpenIdAuth = apiKey === 'openid';
 
   if (opts.assistants && process.env.ASSISTANTS_BASE_URL) {
     reverseProxyUrl = process.env.ASSISTANTS_BASE_URL;
@@ -151,6 +153,9 @@ const fetchOpenAIModels = async (opts, _models = []) => {
 
   if (reverseProxyUrl) {
     baseURL = extractBaseURL(reverseProxyUrl);
+  } else if (process.env.LITELLM_URL && !opts.azure) {
+    // Use LITELLM_URL as fallback if no specific reverse proxy is set
+    baseURL = extractBaseURL(process.env.LITELLM_URL);
   }
 
   const modelsCache = getLogStores(CacheKeys.MODEL_QUERIES);
@@ -161,12 +166,20 @@ const fetchOpenAIModels = async (opts, _models = []) => {
   }
 
   if (baseURL || opts.azure) {
+    // Use authorization header when OpenID auth is enabled
+    const headers = shouldUseOpenIdAuth && opts.req?.headers?.authorization
+      ? { Authorization: opts.req.headers.authorization }
+      : shouldUseOpenIdAuth && opts.user
+      ? { Authorization: `Bearer ${opts.user}` }
+      : undefined;
+
     models = await fetchModels({
       apiKey,
       baseURL,
       azure: opts.azure,
       user: opts.user,
       name: EModelEndpoint.openAI,
+      headers,
     });
   }
 
@@ -266,6 +279,9 @@ const fetchAnthropicModels = async (opts, _models = []) => {
 
   if (reverseProxyUrl) {
     baseURL = extractBaseURL(reverseProxyUrl);
+  } else if (process.env.LITELLM_URL) {
+    // Use LITELLM_URL as fallback if no specific reverse proxy is set
+    baseURL = extractBaseURL(process.env.LITELLM_URL);
   }
 
   if (!apiKey) {

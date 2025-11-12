@@ -26,14 +26,18 @@ const auth = require('./auth');
 const edit = require('./edit');
 const keys = require('./keys');
 const user = require('./user');
+const usage = require('./usage');
 const mcp = require('./mcp');
+const guardrails = require('./guardrails');
 
 module.exports = {
   mcp,
+  guardrails,
   edit,
   auth,
   keys,
   user,
+  usage,
   tags,
   roles,
   oauth,

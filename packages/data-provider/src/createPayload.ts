@@ -38,6 +38,8 @@ export default function createPayload(submission: t.TSubmission) {
     conversationId,
     isContinued: !!(isEdited && isContinued),
     ephemeralAgent: s.isAssistantsEndpoint(endpoint) ? undefined : ephemeralAgent,
+    // Include guardrails from conversation
+    guardrails: conversation?.guardrails,
   };
 
   return { server, payload };

@@ -1061,7 +1061,7 @@ ${convo}
 
       let modelOptions = { ...this.modelOptions };
 
-      if (typeof onProgress === 'function') {
+      if (typeof onProgress === 'function' && modelOptions.stream !== false) {
         modelOptions.stream = true;
       }
       if (this.isChatCompletion) {
@@ -1220,6 +1220,19 @@ ${convo}
           addParams: addParams,
           modelOptions,
         });
+      }
+
+      // Handle guardrails parameter
+      const guardrails = this.options.req?.body?.guardrails;
+      
+      if (guardrails && Array.isArray(guardrails) && guardrails.length > 0) {
+        modelOptions.guardrails = guardrails;
+        logger.debug('[OpenAIClient] chatCompletion: added guardrails', {
+          guardrails: guardrails,
+          modelOptions,
+        });
+      } else {
+        logger.debug('[OpenAIClient] No guardrails found or guardrails is empty');
       }
 
       /** Note: OpenAI Web Search models do not support any known parameters besdies `max_tokens` */

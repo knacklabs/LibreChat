@@ -69,8 +69,9 @@ const initializeAgent = async ({
     ),
   );
 
-  const { resendFiles, maxContextTokens, modelOptions } = extractLibreChatParams(_modelOptions);
+  const { resendFiles, maxContextTokens, modelOptions, promptPrefix } = extractLibreChatParams(_modelOptions);
 
+ 
   if (isInitialAgent && conversationId != null && resendFiles) {
     const fileIds = (await getConvoFiles(conversationId)) ?? [];
     /** @type {Set<EToolResources>} */

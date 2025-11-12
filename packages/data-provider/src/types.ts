@@ -70,6 +70,8 @@ export type TEndpointOption = Pick<
   | 'examples'
   // Context
   | 'context'
+  // Guardrails
+  | 'guardrails'
 > & {
   // Fields specific to endpoint options that don't exist on TConversation
   modelDisplayLabel?: string;
@@ -110,6 +112,7 @@ export type TPayload = Partial<TMessage> &
     isTemporary: boolean;
     ephemeralAgent?: TEphemeralAgent | null;
     editedContent?: TEditedContent | null;
+    guardrails?: string[];
   };
 
 export type TEditedContent =
@@ -277,6 +280,10 @@ export type TSharedLinkResponse = Pick<TSharedLink, 'shareId'> &
 
 export type TSharedLinkGetResponse = TSharedLinkResponse & {
   success: boolean;
+};
+
+export type TContinueShareRequest = {
+  shareId: string;
 };
 
 // type for getting conversation tags

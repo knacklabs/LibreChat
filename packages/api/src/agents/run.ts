@@ -73,13 +73,30 @@ export async function createRun({
       agent.provider as keyof typeof providerEndpointMap
     ] as unknown as Providers) ?? agent.provider;
 
+  // Start with agent.model_parameters first, then override with run-time options
+  // This ensures that streaming settings from model_parameters are respected
+  // Handle both 'stream' (Anthropic) and 'streaming' (Google/OpenAI) properties
+  const modelParams = agent.model_parameters as Record<string, unknown> | undefined;
+  const modelStreaming = modelParams?.streaming ?? modelParams?.stream;
+  const finalStreaming = modelStreaming !== undefined ? (modelStreaming as boolean) : streaming;
+  
+  // console.log('[createRun] Streaming configuration:', {
+  //   provider: agent.provider,
+  //   modelParametersStreaming: modelParams?.streaming,
+  //   modelParametersStream: modelParams?.stream,
+  //   defaultStreaming: streaming,
+  //   finalStreaming,
+  // });
+  
   const llmConfig: t.RunLLMConfig = Object.assign(
+    {},
+    agent.model_parameters,
     {
       provider,
-      streaming,
+      streaming: finalStreaming,
+      stream: finalStreaming,  // Set both for compatibility
       streamUsage,
     },
-    agent.model_parameters,
   );
 
   /** Resolves issues with new OpenAI usage field */
@@ -107,9 +124,70 @@ export async function createRun({
     graphConfig.streamBuffer = 2000;
   }
 
-  return Run.create({
+  // return Run.create({
+  //   runId,
+  //   graphConfig,
+  //   customHandlers,
+  // });
+
+  // temp fix for google guardrails and streaming
+  const run = await Run.create({
     runId,
     graphConfig,
     customHandlers,
   });
+  
+  // Patch Google/VertexAI and Anthropic models to fix invocationParams
+  if (run.Graph?.boundModel) {
+    const capturedStreaming = finalStreaming;
+    const llmConfigAsRecord = llmConfig as unknown as Record<string, unknown>;
+    
+    console.log('[createRun] Model before patching:', {
+      provider,
+      'boundModel.streaming': (run.Graph.boundModel as any).streaming,
+      'boundModel.stream': (run.Graph.boundModel as any).stream,
+      'finalStreaming': capturedStreaming,
+    });
+    
+    // CRITICAL: Set streaming property directly on the model instance
+    // This is what LangChain actually checks, not just invocationParams
+    if (provider === Providers.GOOGLE || 
+        provider === Providers.VERTEXAI || 
+        provider === Providers.ANTHROPIC || 
+        provider === Providers.BEDROCK) {
+      (run.Graph.boundModel as any).streaming = capturedStreaming;
+      console.log('[createRun] ✅ Set boundModel.streaming directly to:', capturedStreaming);
+    }
+    
+    // For Google/VertexAI, inject invocationKwargs (for guardrails)
+    if ((provider === Providers.GOOGLE || provider === Providers.VERTEXAI) && llmConfigAsRecord.invocationKwargs) {
+      (run.Graph.boundModel as any).invocationKwargs = llmConfigAsRecord.invocationKwargs;
+      console.log('[createRun] Injected invocationKwargs for Google:', llmConfigAsRecord.invocationKwargs);
+    }
+    
+    // ALSO patch invocationParams as backup
+    const originalInvocationParams = run.Graph.boundModel.invocationParams?.bind(run.Graph.boundModel);
+    if (originalInvocationParams && 
+        (provider === Providers.GOOGLE || 
+         provider === Providers.VERTEXAI || 
+         provider === Providers.ANTHROPIC || 
+         provider === Providers.BEDROCK)) {
+      run.Graph.boundModel.invocationParams = function(options: any) {
+        const params = originalInvocationParams(options);
+        const invocationKwargs = (this as any).invocationKwargs || {};
+        const modelKwargs = (this as any).modelKwargs || {};
+        
+        return {
+          ...params,
+          ...modelKwargs,
+          ...invocationKwargs,
+          stream: capturedStreaming,
+        };
+      };
+      
+      console.log('[createRun] ✅ Also patched invocationParams for', provider);
+    }
+  }
+  
+  return run;
 }

@@ -97,6 +97,7 @@ function logToolError(graph, error, toolId) {
 
 class AgentClient extends BaseClient {
   constructor(options = {}) {
+    
     super(null, options);
     /** The current client class
      * @type {string} */
@@ -237,11 +238,30 @@ class AgentClient extends BaseClient {
     /** @type {number | undefined} */
     let promptTokens;
 
+    let guardrail_prompt = '';
+
+    // Detect guardrails for prompt prefix from multiple possible sources
+    const reqBody = this.options.req?.body;
+    const promptGuardrails =
+      reqBody?.guardrails ||
+      reqBody?.endpointOption?.model_parameters?.guardrails ||
+      this.options.agent?.model_parameters?.guardrails ||
+      this.options.agent?.model_parameters?.clientOptions?.guardrails;
+
+    if (Array.isArray(promptGuardrails) && promptGuardrails.length > 0) {
+      guardrail_prompt = process.env.GUARDRAILS_PROMPT_PREFIX || '';
+    } else {
+      console.log('[AgentClient] No guardrails prompt');
+      console.log('[AgentClient] Model parameters prior to guardrails:', this.options.agent.model_parameters);
+    }
+
     /** @type {string} */
-    let systemContent = [instructions ?? '', additional_instructions ?? '']
+    let systemContent = [instructions ?? '', additional_instructions ?? '', guardrail_prompt]
       .filter(Boolean)
       .join('\n')
       .trim();
+    
+    // console.log('[AgentClient] System content:', systemContent);
 
     if (this.options.attachments) {
       const attachments = await this.options.attachments;
@@ -769,6 +789,8 @@ class AgentClient extends BaseClient {
       if (!abortController) {
         abortController = new AbortController();
       }
+    // console.log('[AgentClient] chatcompletion called');
+    // console.log('[AgentClient] chatcompletion model_parameters:', JSON.stringify(this.options.agent.model_parameters, null, 2));
 
       const appConfig = this.options.req.config;
       /** @type {AppConfig['endpoints']['agents']} */
@@ -896,6 +918,23 @@ class AgentClient extends BaseClient {
           signal: abortController.signal,
           customHandlers: this.options.eventHandlers,
         });
+        
+        const guardrails =
+          run.Graph.clientOptions?.guardrails ||
+          run.Graph.clientOptions?.clientOptions?.guardrails ||
+          run.Graph.llmConfig?.clientOptions?.guardrails ||
+          this.options.agent?.model_parameters?.clientOptions?.guardrails ||
+          this.options.agent?.model_parameters?.guardrails;
+
+        if (Array.isArray(guardrails) && guardrails.length > 0) {
+          if (!run.Graph.boundModel.modelKwargs) {
+            run.Graph.boundModel.modelKwargs = {};
+          }
+          run.Graph.boundModel.modelKwargs.guardrails = guardrails;
+          console.log('[AgentClient] Guardrails added to modelKwargs:', guardrails);
+        } else {
+          console.log('[AgentClient] No guardrails found in run or agent model parameters');
+        }
 
         if (!run) {
           throw new Error('Failed to create run');
@@ -927,6 +966,32 @@ class AgentClient extends BaseClient {
         if (userMCPAuthMap != null) {
           config.configurable.userMCPAuthMap = userMCPAuthMap;
         }
+        // Debug: log outgoing request preview to verify guardrails/baseURL before hitting provider
+        try {
+          const preview = {
+            baseURL: run.Graph?.llmConfig?.clientOptions?.baseURL,
+            endpoint: this.options?.endpoint,
+            model: agent?.model_parameters?.model,
+            guardrails:
+              run.Graph?.boundModel?.modelKwargs?.guardrails ?? guardrails ?? null,
+            stream:
+              run.Graph?.boundModel?.modelKwargs?.stream ?? agent?.model_parameters?.stream,
+            lastMessageRole: Array.isArray(messages) && messages.length
+              ? messages[messages.length - 1]?.role
+              : undefined,
+          };
+          console.log('[AgentClient] Outgoing request preview:', preview);
+          const rb = config?.configurable?.requestBody || {};
+          console.log('[AgentClient] RequestBody preflight:', {
+            hasRequestBody: !!config?.configurable?.requestBody,
+            requestBodyKeys: Object.keys(rb),
+            requestBodyGuardrails: rb?.guardrails,
+          });
+          console.log('[AgentClient] boundModel.modelKwargs:', run.Graph?.boundModel?.modelKwargs);
+        } catch (e) {
+          console.log('[AgentClient] Outgoing request preview log error:', e?.message);
+        }
+
         await run.processStream({ messages }, config, {
           keepContent: i !== 0,
           tokenCounter: createTokenCounter(this.getEncoding()),
@@ -1215,6 +1280,19 @@ class AgentClient extends BaseClient {
           parentMessageId: this.parentMessageId,
         },
       });
+    }
+
+    // Add guardrails support for title generation
+    const guardrails =
+      agent.model_parameters?.guardrails ||
+      agent.model_parameters?.clientOptions?.guardrails;
+
+    if (Array.isArray(guardrails) && guardrails.length > 0) {
+      if (!clientOptions.modelKwargs) {
+        clientOptions.modelKwargs = {};
+      }
+      clientOptions.modelKwargs.guardrails = guardrails;
+      logger.debug('[AgentClient #titleConvo] Guardrails added to clientOptions:', guardrails);
     }
 
     try {

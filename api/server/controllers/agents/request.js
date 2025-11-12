@@ -28,6 +28,7 @@ function createCloseHandler(abortController) {
 }
 
 const AgentController = async (req, res, next, initializeClient, addTitle) => {
+  
   let {
     text,
     isRegenerate,
@@ -40,6 +41,7 @@ const AgentController = async (req, res, next, initializeClient, addTitle) => {
     responseMessageId: editedResponseMessageId = null,
   } = req.body;
 
+  
   let sender;
   let abortKey;
   let userMessage;
@@ -133,12 +135,14 @@ const AgentController = async (req, res, next, initializeClient, addTitle) => {
     };
     cleanupHandlers.push(removePrelimHandler);
     /** @type {{ client: TAgentClient; userMCPAuthMap?: Record<string, Record<string, string>> }} */
+    console.log('[AgentController] About to initialize client with endpointOption:', JSON.stringify(endpointOption, null, 2));
     const result = await initializeClient({
       req,
       res,
       endpointOption,
       signal: prelimAbortController.signal,
     });
+    console.log('[AgentController] Client initialized successfully:', result ? 'Client created' : 'No client');
     if (prelimAbortController.signal?.aborted) {
       prelimAbortController = null;
       throw new Error('Request was aborted before initialization could complete');

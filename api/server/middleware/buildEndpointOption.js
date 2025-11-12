@@ -85,6 +85,37 @@ async function buildEndpointOption(req, res, next) {
     // TODO: use object params
     req.body.endpointOption = await builder(endpoint, parsedBody, endpointType);
 
+    // Handle default guardrails override from config
+    const guardrailsConfig = appConfig?.guardrails || {};
+    const defaultEnabled = guardrailsConfig.defaultEnabled || false;
+    const requiredGuardrails = guardrailsConfig.required || [];
+
+    // Determine which guardrails to use
+    let guardrailsToApply = req.body.guardrails;
+    
+    if (defaultEnabled && requiredGuardrails.length > 0) {
+      // Override user selection with default guardrails
+      guardrailsToApply = requiredGuardrails;
+      logger.info('[buildEndpointOption] Applying default guardrails (override):', guardrailsToApply);
+    }
+
+    // Handle guardrails for agents endpoint
+    if (isAgents && guardrailsToApply && Array.isArray(guardrailsToApply) && guardrailsToApply.length > 0) {
+      if (req.body.endpointOption && req.body.endpointOption.model_parameters) {
+        req.body.endpointOption.model_parameters.guardrails = guardrailsToApply;
+        console.log('[buildEndpointOption] Guardrails:', req.body.endpointOption.model_parameters.guardrails);
+      }
+    } else if (isAgents && req.body.endpointOption && req.body.endpointOption.model_parameters) {
+      logger.debug('[buildEndpointOption] No guardrails');
+    }
+
+    // Apply guardrails to non-agent endpoints as well
+    if (!isAgents && guardrailsToApply && Array.isArray(guardrailsToApply) && guardrailsToApply.length > 0) {
+      req.body.guardrails = guardrailsToApply;
+      logger.info('[buildEndpointOption] Applying guardrails to non-agent endpoint:', guardrailsToApply);
+    }
+
+
     if (req.body.files && !isAgents) {
       req.body.endpointOption.attachments = processFiles(req.body.files);
     }

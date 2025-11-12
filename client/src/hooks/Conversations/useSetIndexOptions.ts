@@ -25,6 +25,7 @@ const useSetIndexOptions: TUseSetOptions = (preset = false) => {
   }
 
   const setOption: TSetOption = (param) => (newValue) => {
+    
     const update = {};
     update[param] = newValue;
 
@@ -51,7 +52,7 @@ const useSetIndexOptions: TUseSetOptions = (preset = false) => {
         }
       }
     }
-
+    
     setConversation(
       (prevState) =>
         tConvoUpdateSchema.parse({
@@ -59,6 +60,7 @@ const useSetIndexOptions: TUseSetOptions = (preset = false) => {
           ...update,
         }) as TConversation,
     );
+
   };
 
   const setExample: TSetExample = (i, type, newValue = null) => {

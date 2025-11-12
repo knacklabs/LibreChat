@@ -4,9 +4,13 @@ import {
   TrashIcon,
   Label,
   OGDialog,
-  OGDialogTrigger,
+  OGDialogContent,
+  OGDialogHeader,
+  OGDialogTitle,
+  OGDialogFooter,
+  OGDialogClose,
   TooltipAnchor,
-  OGDialogTemplate,
+  Spinner,
   useToastContext,
 } from '@librechat/client';
 import type { FC } from 'react';
@@ -29,56 +33,79 @@ const DeleteBookmarkButton: FC<{
       showToast({
         message: localize('com_ui_bookmarks_delete_success'),
       });
+      setOpen(false);
     },
     onError: () => {
       showToast({
         message: localize('com_ui_bookmarks_delete_error'),
         severity: NotificationSeverity.ERROR,
       });
+      setOpen(false);
     },
   });
 
   const confirmDelete = useCallback(async () => {
-    await deleteBookmarkMutation.mutateAsync(bookmark);
+    try {
+      await deleteBookmarkMutation.mutateAsync(bookmark);
+    } catch (error) {
+      // Error is already handled in mutation callbacks
+    }
   }, [bookmark, deleteBookmarkMutation]);
 
   return (
     <>
+      <TooltipAnchor
+        description={localize('com_ui_delete')}
+        render={
+          <Button
+            variant="ghost"
+            aria-label={localize('com_ui_bookmarks_delete')}
+            tabIndex={tabIndex}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(true);
+            }}
+            className="h-8 w-8 p-0"
+          >
+            <TrashIcon />
+          </Button>
+        }
+      />
       <OGDialog open={open} onOpenChange={setOpen}>
-        <OGDialogTrigger asChild>
-          <TooltipAnchor
-            description={localize('com_ui_delete')}
-            render={
-              <Button
-                variant="ghost"
-                aria-label={localize('com_ui_bookmarks_delete')}
-                tabIndex={tabIndex}
-                onFocus={onFocus}
-                onBlur={onBlur}
-                onClick={() => setOpen(!open)}
-                className="h-8 w-8 p-0"
-              >
-                <TrashIcon />
-              </Button>
-            }
-          />
-        </OGDialogTrigger>
-        <OGDialogTemplate
+        <OGDialogContent
           showCloseButton={false}
-          title={localize('com_ui_bookmarks_delete')}
-          className="w-11/12 max-w-lg"
-          main={
+          className="w-11/12 max-w-lg border-none bg-background text-foreground"
+        >
+          <OGDialogHeader>
+            <OGDialogTitle>{localize('com_ui_bookmarks_delete')}</OGDialogTitle>
+          </OGDialogHeader>
+          <div className="px-0 py-2">
             <Label className="text-left text-sm font-medium">
               {localize('com_ui_bookmark_delete_confirm')} {bookmark}
             </Label>
-          }
-          selection={{
-            selectHandler: confirmDelete,
-            selectClasses:
-              'bg-red-700 dark:bg-red-600 hover:bg-red-800 dark:hover:bg-red-800 text-white',
-            selectText: localize('com_ui_delete'),
-          }}
-        />
+          </div>
+          <OGDialogFooter>
+            <div className="flex h-auto gap-3 max-sm:w-full max-sm:flex-col sm:flex-row">
+              <OGDialogClose asChild>
+                <Button variant="outline">{localize('com_ui_cancel')}</Button>
+              </OGDialogClose>
+              <Button
+                onClick={confirmDelete}
+                disabled={deleteBookmarkMutation.isLoading}
+                className="bg-red-700 text-white hover:bg-red-800 disabled:opacity-80 dark:bg-red-600 dark:hover:bg-red-800"
+              >
+                {deleteBookmarkMutation.isLoading ? (
+                  <Spinner className="size-4 text-white" />
+                ) : (
+                  localize('com_ui_delete')
+                )}
+              </Button>
+            </div>
+          </OGDialogFooter>
+        </OGDialogContent>
       </OGDialog>
     </>
   );

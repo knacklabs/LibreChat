@@ -269,22 +269,22 @@ const ToolsDropdown = ({ disabled }: ToolsDropdownProps) => {
     });
   }
 
-  if (artifactsEnabled) {
-    dropdownItems.push({
-      hideOnClick: false,
-      render: (props) => (
-        <ArtifactsSubMenu
-          {...props}
-          isArtifactsPinned={isArtifactsPinned}
-          setIsArtifactsPinned={setIsArtifactsPinned}
-          artifactsMode={artifacts.toggleState as string}
-          handleArtifactsToggle={handleArtifactsToggle}
-          handleShadcnToggle={handleShadcnToggle}
-          handleCustomToggle={handleCustomToggle}
-        />
-      ),
-    });
-  }
+  // if (artifactsEnabled) {
+  //   dropdownItems.push({
+  //     hideOnClick: false,
+  //     render: (props) => (
+  //       <ArtifactsSubMenu
+  //         {...props}
+  //         isArtifactsPinned={isArtifactsPinned}
+  //         setIsArtifactsPinned={setIsArtifactsPinned}
+  //         artifactsMode={artifacts.toggleState as string}
+  //         handleArtifactsToggle={handleArtifactsToggle}
+  //         handleShadcnToggle={handleShadcnToggle}
+  //         handleCustomToggle={handleCustomToggle}
+  //       />
+  //     ),
+  //   });
+  // }
 
   const { configuredServers } = mcpServerManager;
   if (configuredServers && configuredServers.length > 0) {

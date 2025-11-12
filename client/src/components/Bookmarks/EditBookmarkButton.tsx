@@ -15,31 +15,33 @@ const EditBookmarkButton: FC<{
   const [open, setOpen] = useState(false);
 
   return (
-    <BookmarkEditDialog
-      context="EditBookmarkButton"
-      bookmark={bookmark}
-      open={open}
-      setOpen={setOpen}
-    >
-      <OGDialogTrigger asChild>
-        <TooltipAnchor
-          description={localize('com_ui_edit')}
-          render={
-            <Button
-              variant="ghost"
-              aria-label={localize('com_ui_bookmarks_edit')}
-              tabIndex={tabIndex}
-              onFocus={onFocus}
-              onBlur={onBlur}
-              onClick={() => setOpen(!open)}
-              className="h-8 w-8 p-0"
-            >
-              <EditIcon />
-            </Button>
-          }
-        />
-      </OGDialogTrigger>
-    </BookmarkEditDialog>
+    <>
+      <TooltipAnchor
+        description={localize('com_ui_edit')}
+        render={
+          <Button
+            variant="ghost"
+            aria-label={localize('com_ui_bookmarks_edit')}
+            tabIndex={tabIndex}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(true);
+            }}
+            className="h-8 w-8 p-0"
+          >
+            <EditIcon />
+          </Button>
+        }
+      />
+      <BookmarkEditDialog
+        context="EditBookmarkButton"
+        bookmark={bookmark}
+        open={open}
+        setOpen={setOpen}
+      />
+    </>
   );
 };
 
