@@ -1,6 +1,6 @@
 export interface APIKey {
   key_alias: string | null;
-  token: string | null;
+  key_name: string | null;
   created_at: string | null;
   expires: string | null;
   spend: number | null;

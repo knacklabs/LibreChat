@@ -3,6 +3,7 @@ import { RefreshCw } from 'lucide-react';
 import { useAuthContext } from '~/hooks';
 import APIKeysTable from './APIKeysTable';
 import type { APIKey, FetchAPIKeysResponse } from './types';
+import { Button } from '@librechat/client';
 
 function APIKeys() {
   const { isAuthenticated,token } = useAuthContext();
@@ -76,30 +77,23 @@ function APIKeys() {
     <div className="flex flex-col gap-4 p-1 text-sm text-text-primary">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-base font-semibold text-gray-900">API Keys</h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">API Keys</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
             Manage your LiteLLM API keys for integrations and access control.
           </p>
         </div>
-        <button
+        <Button
           onClick={handleRefresh}
+          variant="outline"
           disabled={isLoading || refreshing}
-          className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           {refreshing ? 'Refreshing...' : 'Refresh'}
-        </button>
+        </Button>
       </div>
 
       <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
         <APIKeysTable keys={keys} isLoading={isLoading} error={error} />
-      </div>
-
-      <div className="text-xs text-gray-500 mt-2">
-        <p>
-          💡 <strong>Tip:</strong> Use the "View" button to see your API key details. Keys are only
-          displayed once for security reasons.
-        </p>
       </div>
     </div>
   );
