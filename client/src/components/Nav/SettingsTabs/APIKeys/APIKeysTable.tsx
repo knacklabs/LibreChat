@@ -1,10 +1,13 @@
 import React from 'react';
+import { Trash2 } from 'lucide-react';
+import { Button } from '@librechat/client';
 import type { APIKey } from './types';
 
 interface APIKeysTableProps {
   keys: APIKey[];
   isLoading: boolean;
   error?: string | null;
+  onDelete?: (key: APIKey) => void;
 }
 
 function maskSecret(secret: string | null): string {
@@ -31,7 +34,7 @@ function formatSpend(spend: number | null): string {
   return `$${Number(spend).toFixed(2)}`;
 }
 
-export default function APIKeysTable({ keys, isLoading, error }: APIKeysTableProps) {
+export default function APIKeysTable({ keys, isLoading, error, onDelete }: APIKeysTableProps) {
 
   if (isLoading) {
     return (
@@ -103,6 +106,9 @@ export default function APIKeysTable({ keys, isLoading, error }: APIKeysTablePro
               <th className="px-4 py-3 text-left text-sm font-semibold text-text-primary">
                 Updated At
               </th>
+              <th className="px-4 py-3 text-center text-sm font-semibold text-text-primary">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -128,6 +134,17 @@ export default function APIKeysTable({ keys, isLoading, error }: APIKeysTablePro
                 </td>
                 <td className="px-4 py-3 text-sm text-text-secondary">
                   {formatDate(key.updated_at)}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <Button
+                    onClick={() => onDelete?.(key)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 p-1"
+                    title="Delete API Key"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </td>
               </tr>
             ))}
