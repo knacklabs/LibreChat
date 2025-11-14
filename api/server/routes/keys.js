@@ -450,7 +450,7 @@ router.delete('/delete/:key_alias', requireJwtAuth, async (req, res) => {
     // Forward request to LiteLLM with auth header and constructed payload
     const response = await axios.post(endpoint, deletePayload, {
       headers: {
-        'Authorization': 'Bearer sk-1234',
+        'Authorization': authHeader,
         'Content-Type': 'application/json',
       },
       timeout: 10000,
