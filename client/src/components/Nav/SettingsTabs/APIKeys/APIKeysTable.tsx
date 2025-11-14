@@ -73,7 +73,7 @@ export default function APIKeysTable({ keys, isLoading, error }: APIKeysTablePro
       <div className="bg-surface-secondary dark:bg-surface-tertiary border border-border-light dark:border-border-medium rounded-lg p-8 text-center">
         <p className="text-text-secondary dark:text-text-secondary">No API keys found</p>
         <p className="text-sm text-text-tertiary dark:text-text-tertiary mt-1">
-          Create an API key in LiteLLM to manage your integrations.
+          Create an API key.
         </p>
       </div>
     );
