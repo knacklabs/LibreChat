@@ -246,10 +246,11 @@ router.post('/generate', requireJwtAuth, async (req, res) => {
     // Extract only the allowed parameters from frontend
     const { key_alias, duration } = req.body;
 
-    // Build the request payload with backend-controlled defaults
+    // Build the request payload with backend-controlled defaults and include user_id
     const generatePayload = {
       key_alias,
       duration,
+      user_id: userId, // Add user_id to payload for LiteLLM
     };
 
     const endpoint = `${liteLLMUrl}/key/generate`;
