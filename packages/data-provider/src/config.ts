@@ -1547,6 +1547,10 @@ export enum SettingsTabValues {
    * Tab for Personalization Settings
    */
   PERSONALIZATION = 'personalization',
+  /**
+   * Tab for API Keys
+   */
+  API_KEYS = 'api_keys',
 }
 
 export enum STTProviders {
