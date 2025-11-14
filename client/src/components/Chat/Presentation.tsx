@@ -7,6 +7,7 @@ import DragDropWrapper from '~/components/Chat/Input/Files/DragDropWrapper';
 import { EditorProvider, SidePanelProvider, ArtifactsProvider } from '~/Providers';
 import Artifacts from '~/components/Artifacts/Artifacts';
 import { SidePanelGroup } from '~/components/SidePanel';
+import ParametersModal from '~/components/Chat/Menus/ParametersModal';
 import { useSetFilesToDelete } from '~/hooks';
 import store from '~/store';
 
@@ -79,6 +80,7 @@ export default function Presentation({ children }: { children: React.ReactNode }
           </main>
         </SidePanelGroup>
       </SidePanelProvider>
+      <ParametersModal />
     </DragDropWrapper>
   );
 }
