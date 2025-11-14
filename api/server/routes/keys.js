@@ -40,7 +40,7 @@ router.get('/', requireJwtAuth, async (req, res) => {
  */
 router.get('/list', requireJwtAuth, async (req, res) => {
   try {
-    const userId = req.user?.id || 'unknown_user';
+    const userId = req.user?.openidId || 'unknown_user';
     console.log('[API Keys] Request received from user:', userId);
     
     // Check if LITELLM_URL is configured
@@ -216,7 +216,7 @@ router.get('/list', requireJwtAuth, async (req, res) => {
  */
 router.post('/generate', requireJwtAuth, async (req, res) => {
   try {
-    const userId = req.user?.id || 'unknown_user';
+    const userId = req.user?.openidId || 'unknown_user';
     console.log('[API Keys] Generate key request received from user:', userId);
 
     // Check if LITELLM_URL is configured
@@ -400,7 +400,7 @@ router.post('/generate', requireJwtAuth, async (req, res) => {
  */
 router.delete('/delete/:key_alias', requireJwtAuth, async (req, res) => {
   try {
-    const userId = req.user?.id || 'unknown_user';
+    const userId = req.user?.openidId || 'unknown_user';
     const { key_alias } = req.params;
     console.log('[API Keys] Delete key request received from user:', userId, 'for key_alias:', key_alias);
 
