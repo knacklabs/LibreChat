@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
 import { SettingsTabValues } from 'librechat-data-provider';
-import { MessageSquare, Command, DollarSign } from 'lucide-react';
+import { MessageSquare, Command, DollarSign, Key } from 'lucide-react';
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
 import {
   GearIcon,
@@ -21,6 +21,7 @@ import {
   Data,
   Balance,
   Account,
+  APIKeys,
 } from './SettingsTabs';
 import usePersonalizationAccess from '~/hooks/usePersonalizationAccess';
 import { useLocalize, TranslationKeys } from '~/hooks';
@@ -44,6 +45,7 @@ export default function Settings({ open, onOpenChange }: TDialogProps) {
       ...(hasAnyPersonalizationFeature ? [SettingsTabValues.PERSONALIZATION] : []),
       SettingsTabValues.DATA,
       ...(startupConfig?.balance?.enabled ? [SettingsTabValues.BALANCE] : []),
+      SettingsTabValues.API_KEYS,
       SettingsTabValues.ACCOUNT,
     ];
     const currentIndex = tabs.indexOf(activeTab);
@@ -116,6 +118,11 @@ export default function Settings({ open, onOpenChange }: TDialogProps) {
           },
         ]
       : ([] as { value: SettingsTabValues; icon: React.JSX.Element; label: TranslationKeys }[])),
+    {
+      value: SettingsTabValues.API_KEYS,
+      icon: <Key className="icon-sm" />,
+      label: 'com_nav_setting_api_keys' as TranslationKeys,
+    },
     {
       value: SettingsTabValues.ACCOUNT,
       icon: <UserIcon />,
@@ -248,6 +255,9 @@ export default function Settings({ open, onOpenChange }: TDialogProps) {
                         <Balance />
                       </Tabs.Content>
                     )}
+                    <Tabs.Content value={SettingsTabValues.API_KEYS} tabIndex={-1}>
+                      <APIKeys />
+                    </Tabs.Content>
                     <Tabs.Content value={SettingsTabValues.ACCOUNT} tabIndex={-1}>
                       <Account />
                     </Tabs.Content>
