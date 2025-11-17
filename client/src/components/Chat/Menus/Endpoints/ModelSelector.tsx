@@ -97,13 +97,14 @@ function ModelSelectorContent() {
             {renderEndpoints(mappedEndpoints ?? [])}
             {/* Guardrails section - only show when a model is selected */}
             {selectedValues.model && (
-              <div className="border-t border-border-light px-3 py-3 dark:border-gray-600">
-                <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-secondary dark:text-gray-400">
-                  {localize('com_guardrails', { 0: 'Guardrails' }) || 'Guardrails'}
+              <div className="border-t border-gray-200 dark:border-gray-600">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                  Guardrails
                 </div>
                 <GuardrailsSelect
                   conversation={conversation}
                   setOption={setOption}
+                  showAbove={false}
                 />
               </div>
             )}
