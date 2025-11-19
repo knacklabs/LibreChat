@@ -1,7 +1,6 @@
 const express = require('express');
 const EditController = require('~/server/controllers/EditController');
 const { initializeClient } = require('~/server/services/Endpoints/anthropic');
-const routeVertexAIAnthropic = require('~/server/middleware/routeVertexAIAnthropic');
 const {
   setHeaders,
   validateModel,
@@ -15,7 +14,6 @@ router.post(
   '/',
   validateEndpoint,
   validateModel,
-  routeVertexAIAnthropic,
   buildEndpointOption,
   setHeaders,
   async (req, res, next) => {

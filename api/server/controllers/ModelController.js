@@ -40,7 +40,6 @@ async function loadModels(req) {
 
 async function loadModelsFromLiteLLM(req) {
   const modelsConfig = {};
-  const modelProviderMap = {}; // Map of model name to provider
   
   try {
     const litellmUrl = process.env.LITELLM_URL || 'http://localhost:4000';
@@ -80,14 +79,10 @@ async function loadModelsFromLiteLLM(req) {
         return;
       }
       
-      // Store provider information for later lookup
-      modelProviderMap[modelName] = provider;
-      
       // Map providers to endpoints
       if (provider === 'openai') {
         modelsByProvider[EModelEndpoint.openAI].push(modelName);
       } else if (provider === 'anthropic' || provider === 'vertex_ai-anthropic_models') {
-        // Both direct Anthropic and Vertex AI Anthropic models are listed under anthropic endpoint
         modelsByProvider[EModelEndpoint.anthropic].push(modelName);
       } else if (provider === 'google' || provider === 'gemini' || provider === 'vertex_ai-language-models') {
         modelsByProvider[EModelEndpoint.google].push(modelName);
@@ -102,9 +97,6 @@ async function loadModelsFromLiteLLM(req) {
         modelsConfig[endpoint] = modelsByProvider[endpoint];
       }
     });
-    
-    // Store provider map for identifying vertex_ai-anthropic models
-    modelsConfig._modelProviders = modelProviderMap;
     
     logger.info(`Loaded ${Object.keys(modelsConfig).length} endpoints from LiteLLM`);
     
