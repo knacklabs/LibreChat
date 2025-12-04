@@ -2,12 +2,13 @@ import { useState, memo } from 'react';
 import { useRecoilState } from 'recoil';
 import { useNavigate } from 'react-router-dom';
 import * as Select from '@ariakit/react/select';
-import { FileText, LogOut, TrendingUp } from 'lucide-react';
+import { FileText, LogOut, TrendingUp, Sliders } from 'lucide-react';
 import { LinkIcon, GearIcon, DropdownMenuSeparator, Avatar } from '@librechat/client';
 import { useGetStartupConfig, useGetUserBalance } from '~/data-provider';
 import FilesView from '~/components/Chat/Input/Files/FilesView';
 import { useAuthContext } from '~/hooks/AuthContext';
 import { useLocalize } from '~/hooks';
+import ModelConfigDialog from './ModelConfigDialog';
 import Settings from './Settings';
 import store from '~/store';
 
@@ -20,6 +21,7 @@ function AccountSettings() {
     enabled: !!isAuthenticated && startupConfig?.balance?.enabled,
   });
   const [showSettings, setShowSettings] = useState(false);
+  const [showModelConfig, setShowModelConfig] = useState(false);
   const [showFiles, setShowFiles] = useRecoilState(store.showFiles);
 
   return (
@@ -90,6 +92,14 @@ function AccountSettings() {
         </Select.SelectItem>
         <Select.SelectItem
           value=""
+          onClick={() => setShowModelConfig(true)}
+          className="select-item text-sm"
+        >
+          <Sliders className="icon-md" aria-hidden="true" />
+          Config
+        </Select.SelectItem>
+        <Select.SelectItem
+          value=""
           onClick={() => setShowSettings(true)}
           className="select-item text-sm"
         >
@@ -109,6 +119,9 @@ function AccountSettings() {
       </Select.SelectPopover>
       {showFiles && <FilesView open={showFiles} onOpenChange={setShowFiles} />}
       {showSettings && <Settings open={showSettings} onOpenChange={setShowSettings} />}
+      {showModelConfig && (
+        <ModelConfigDialog open={showModelConfig} onOpenChange={setShowModelConfig} />
+      )}
     </Select.SelectProvider>
   );
 }

@@ -29,8 +29,10 @@ const user = require('./user');
 const usage = require('./usage');
 const mcp = require('./mcp');
 const guardrails = require('./guardrails');
+const modelConfig = require('./modelConfig');
 
 module.exports = {
+  modelConfig,
   mcp,
   guardrails,
   edit,
