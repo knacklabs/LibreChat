@@ -3,16 +3,14 @@ const { logger } = require('@librechat/data-schemas');
 
 const getModelConfig = async (req, res) => {
   try {
-    const url = process.env.LITELLM_URL || 'https://admin.knacklabs.ai/model/info';
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    let baseUrl = process.env.LITELLM_URL || 'https://admin.knacklabs.ai';
+    if (baseUrl.endsWith('/')) {
+      baseUrl = baseUrl.slice(0, -1);
     }
-
-    const accessToken = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const url = `${baseUrl}/model/info`;
     const response = await axios.get(url, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: req.headers.authorization,
       },
     });
 
