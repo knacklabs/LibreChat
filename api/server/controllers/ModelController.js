@@ -82,7 +82,7 @@ async function loadModelsFromLiteLLM(req) {
       // Map providers to endpoints
       if (provider === 'openai') {
         modelsByProvider[EModelEndpoint.openAI].push(modelName);
-      } else if (provider === 'anthropic') {
+      } else if (provider === 'anthropic' || provider === 'vertex_ai-anthropic_models') {
         modelsByProvider[EModelEndpoint.anthropic].push(modelName);
       } else if (provider === 'google' || provider === 'gemini' || provider === 'vertex_ai-language-models') {
         modelsByProvider[EModelEndpoint.google].push(modelName);

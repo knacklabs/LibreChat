@@ -368,7 +368,7 @@ export default function ProfilePage() {
                                     </div>
                                 ) : (() => {
                                     // Prepare chart data
-                                    const dailySpendData = usageData.results.map(day => ({
+                                    const dailySpendData = usageData.results.reverse().map(day => ({
                                         date: new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
                                         spend: day.metrics.spend,
                                         tokens: day.metrics.total_tokens,
